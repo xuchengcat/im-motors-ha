@@ -22,7 +22,7 @@ from .runtime_lock import AccountFileLock
 from .standalone_refresh_probe import load_session, refresh_once
 
 METADATA_INTERVAL_MS = 30 * 60 * 1000
-TELEMETRY_INTERVAL_MS = 5 * 60 * 1000
+TELEMETRY_INTERVAL_MS = 60 * 60 * 1000
 _VIN = re.compile(r"[A-HJ-NPR-Z0-9]{17}\Z")
 
 
@@ -66,6 +66,13 @@ class AccountClient:
         self.key_file = Path(key_file)
         self.transport_factory = transport_factory
         self.clock = clock
+        self.telemetry_interval_ms = TELEMETRY_INTERVAL_MS
+
+    def set_telemetry_interval(self, minutes):
+        """Enforce the five-minute lower bound even outside the HA UI."""
+        if type(minutes) is not int or minutes < 5:
+            raise ValueError("Vehicle polling interval must be an integer of at least five minutes")
+        self.telemetry_interval_ms = minutes * 60 * 1000
 
     def __repr__(self):
         return "AccountClient(<redacted>)"
@@ -204,7 +211,7 @@ class AccountClient:
                     hashlib.sha256(vin.encode("ascii")).hexdigest() != identifier):
                 raise ResponseError("Cached vehicle association identity invalid")
         if (saved is None or set(saved["responses"]) != set(vins) or
-                now_ms < saved["time_ms"] or now_ms - saved["time_ms"] >= TELEMETRY_INTERVAL_MS):
+                now_ms < saved["time_ms"] or now_ms - saved["time_ms"] >= self.telemetry_interval_ms):
             responses = {}
             for identifier, vin in vins.items():
                 request = reader.prepare("vehicle_tab", vin=vin,

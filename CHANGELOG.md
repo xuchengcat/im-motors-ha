@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1
+
+- Default cloud vehicle polling to 60 minutes; expose an integer-minute interval during SMS setup and encrypted-session import.
+- Reject intervals below five minutes in both configuration flows and the runtime client; reuse the configured cache across manual updates and restarts.
+- Apply the one-hour default to existing entries without the setting and preserve custom intervals through reauthentication. Allow changing it through reconfiguration.
+- Report the effective interval in entity attributes and diagnostics; retain separate local auth checks and metadata caching.
+
 ## 0.4.0
 
 - Replace pending vehicle data with VIN-scoped v6 reads, cached for five minutes across manual updates and restarts. Reads may wake the vehicle.

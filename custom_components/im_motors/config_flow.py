@@ -7,7 +7,8 @@ from homeassistant.config_entries import ConfigFlow
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import selector
 
-from .const import DOMAIN, CONF_DATA_DIR, CONF_KEY_FILE, CONF_RESUME
+from .const import (DOMAIN, CONF_DATA_DIR, CONF_KEY_FILE, CONF_RESUME,
+                    CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL, MIN_TELEMETRY_INTERVAL)
 from .pyim_china import AccountClient, ClientFailure, LoginRequired
 from .pyim_china.ha_sms_login import HaSmsLogin, SmsLoginFailure
 from .pyim_china.managed_storage import managed_paths
@@ -39,7 +40,22 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         return vol.Schema({
             vol.Required(CONF_DATA_DIR, default=defaults.get(CONF_DATA_DIR, "/config/im_motors/data")): str,
             vol.Required(CONF_KEY_FILE, default=defaults.get(CONF_KEY_FILE, "/run/secrets/im_vault_key")): str,
+            **self._interval_schema(),
         })
+
+    def _interval_schema(self):
+        entry = self._login_entry()
+        default = entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL) if entry else DEFAULT_TELEMETRY_INTERVAL
+        return {vol.Required(CONF_TELEMETRY_INTERVAL, default=default):
+                vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL))}
+
+    def _interval(self, data):
+        entry = self._login_entry()
+        default = entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL) if entry else DEFAULT_TELEMETRY_INTERVAL
+        value = data.get(CONF_TELEMETRY_INTERVAL, default)
+        if type(value) is not int or value < MIN_TELEMETRY_INTERVAL:
+            raise vol.Invalid("Invalid vehicle polling interval")
+        return value
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
@@ -50,6 +66,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
+                user_input = dict(user_input, **{CONF_TELEMETRY_INTERVAL: self._interval(user_input)})
                 identity = await validate_input(self.hass, user_input)
                 if self.source == "reauth":
                     entry = self._get_reauth_entry()
@@ -57,6 +74,8 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                         return self.async_abort(reason="wrong_account")
                     client = AccountClient(user_input[CONF_DATA_DIR], user_input[CONF_KEY_FILE])
                     await self.hass.async_add_executor_job(client.resume)
+            except vol.Invalid:
+                errors[CONF_TELEMETRY_INTERVAL] = "invalid_interval"
             except LoginRequired:
                 errors["base"] = "login_required"
             except ClientFailure:
@@ -72,7 +91,13 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_sms(self, user_input=None):
         errors = {}
         if user_input is not None:
-            if not HaSmsLogin.valid_phone(user_input["phone"]):
+            try:
+                interval = self._interval(user_input)
+            except vol.Invalid:
+                errors[CONF_TELEMETRY_INTERVAL] = "invalid_interval"
+            if errors:
+                pass
+            elif not HaSmsLogin.valid_phone(user_input["phone"]):
                 errors["phone"] = "invalid_phone"
             else:
                 try:
@@ -82,6 +107,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                     else:
                         paths = await self.hass.async_add_executor_job(managed_paths,
                             self.hass.config.path(".storage", DOMAIN), user_input["phone"])
+                    paths = dict(paths, **{CONF_TELEMETRY_INTERVAL: interval})
                     sms = HaSmsLogin(paths[CONF_DATA_DIR], paths[CONF_KEY_FILE])
                     identity = await self.hass.async_add_executor_job(sms.prepare)
                     if entry:
@@ -103,7 +129,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                     if completed:
                         return await self._finish_login()
                     return await self.async_step_sms_code()
-        schema = vol.Schema({vol.Required("phone"): str})
+        schema = vol.Schema({vol.Required("phone"): str, **self._interval_schema()})
         return self.async_show_form(step_id="sms", data_schema=schema, errors=errors)
 
     async def async_step_sms_code(self, user_input=None):
@@ -159,12 +185,15 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             data = {key: user_input[key] for key in (CONF_DATA_DIR, CONF_KEY_FILE)}
             try:
+                data[CONF_TELEMETRY_INTERVAL] = self._interval(user_input)
                 identity = await validate_input(self.hass, data)
                 if identity != entry.unique_id:
                     return self.async_abort(reason="wrong_account")
                 if user_input.get(CONF_RESUME):
                     client = AccountClient(data[CONF_DATA_DIR], data[CONF_KEY_FILE])
                     await self.hass.async_add_executor_job(client.resume)
+            except vol.Invalid:
+                errors[CONF_TELEMETRY_INTERVAL] = "invalid_interval"
             except LoginRequired:
                 errors["base"] = "login_required"
             except ClientFailure:

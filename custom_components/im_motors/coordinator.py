@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL
 from .pyim_china import AccountClient, AccountSnapshot, ClientFailure, LoginRequired
 
 LOGGER = logging.getLogger(__name__)
@@ -19,6 +19,8 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
         super().__init__(hass, LOGGER, config_entry=entry, name=DOMAIN,
                          update_interval=timedelta(seconds=60), always_update=False)
         self.client = client
+        self.telemetry_interval_minutes = entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL)
+        self.client.set_telemetry_interval(self.telemetry_interval_minutes)
 
     async def _async_update_data(self):
         try:

@@ -25,17 +25,19 @@
       },
       "import": {
         "title": "Import an encrypted session",
-        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline. After setup, read-only cloud vehicle data is polled every five minutes; reads may wake the vehicle.",
+        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline. After setup, read-only cloud vehicle data is polled at the configured interval (default 60 minutes, minimum 5); reads may wake the vehicle.",
         "data": {
           "data_dir": "Encrypted data directory",
-          "key_file": "External key file"
+          "key_file": "External key file",
+          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)"
         }
       },
       "sms": {
         "title": "Phone and SMS login",
-        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS. After setup, read-only cloud vehicle data is polled every five minutes; reads may wake the vehicle.",
+        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS. After setup, read-only cloud vehicle data is polled at the configured interval (default 60 minutes, minimum 5); reads may wake the vehicle.",
         "data": {
-          "phone": "Mobile number"
+          "phone": "Mobile number",
+          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)"
         }
       },
       "sms_code": {
@@ -52,7 +54,8 @@
         "data": {
           "data_dir": "Encrypted data directory",
           "key_file": "External key file",
-          "resume_requests": "Review completed; resume account requests"
+          "resume_requests": "Review completed; resume account requests",
+          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)"
         }
       }
     },
@@ -65,7 +68,8 @@
       "sms_rejected": "The server rejected the SMS request. Check your account and try again later.",
       "login_rejected": "The server rejected login. Check your code, or select resend to request a new code.",
       "code_expired": "The local verification flow expired. Select resend to request a new code.",
-      "invalid_storage": "Unable to initialize local account storage. Check permissions in the HA configuration directory. For existing data, restore the matching key and storage marker; missing or damaged keys are never replaced automatically."
+      "invalid_storage": "Unable to initialize local account storage. Check permissions in the HA configuration directory. For existing data, restore the matching key and storage marker; missing or damaged keys are never replaced automatically.",
+      "invalid_interval": "Enter a whole number of at least 5 minutes."
     },
     "abort": {
       "already_configured": "This client identity is already configured.",

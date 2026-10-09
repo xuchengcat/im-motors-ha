@@ -123,10 +123,10 @@ async def test_full_new_install_phone_only_restart_duplicate_and_reauth(hass, ac
         constructor.side_effect = make_sms
         menu = await hass.config_entries.flow.async_init("im_motors", context={"source": "user"})
         form = await hass.config_entries.flow.async_configure(menu["flow_id"], {"next_step_id": "sms"})
-        assert {str(key) for key in form["data_schema"].schema} == {"phone"}
+        assert {str(key) for key in form["data_schema"].schema} == {"phone", "telemetry_interval_minutes"}
         form = await hass.config_entries.flow.async_configure(form["flow_id"], {"phone": PHONE})
         assert form["step_id"] == "sms_code"
-        paths = {"data_dir": str(created[0].data_dir), "key_file": str(created[0].key_file)}
+        paths = {"data_dir": str(created[0].data_dir), "key_file": str(created[0].key_file), "telemetry_interval_minutes": 60}
         initial_key = Path(paths["key_file"]).read_bytes()
         initial_device = (Path(paths["data_dir"]) / "device.imvault").read_bytes()
         hass.config_entries.flow.async_abort(form["flow_id"])

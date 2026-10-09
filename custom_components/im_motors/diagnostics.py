@@ -1,5 +1,5 @@
 """Diagnostics are allowlisted counts and booleans, never config/response data."""
-from .const import INTEGRATION_VERSION
+from .const import INTEGRATION_VERSION, DEFAULT_TELEMETRY_INTERVAL
 
 
 async def async_get_config_entry_diagnostics(hass, entry):
@@ -9,6 +9,7 @@ async def async_get_config_entry_diagnostics(hass, entry):
             "last_update_success": bool(coordinator and coordinator.last_update_success),
             "associated_vehicle_count": len(snapshot.vehicles) if snapshot else 0,
             "vehicles_with_telemetry": len(snapshot.telemetry) if snapshot else 0,
-            "poll_interval_seconds": 300,
+            "poll_interval_seconds": (coordinator.telemetry_interval_minutes if coordinator
+                                      else DEFAULT_TELEMETRY_INTERVAL) * 60,
             "individual_sample_time_verified": False,
             "pending_fields": ["里程单位", "chargedPower单位", "位置", "完整车锁枚举"]}

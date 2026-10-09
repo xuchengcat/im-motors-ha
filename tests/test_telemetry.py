@@ -12,6 +12,11 @@ from custom_components.im_motors.pyim_china.credential_store import key_context,
 from custom_components.im_motors.telemetry import SENSORS, BINARY_SENSORS, normalized
 
 
+@pytest.fixture(autouse=True)
+def five_minute_test_polling(account):
+    account["client"].set_telemetry_interval(5)
+
+
 def snapshot(category=None, *, features=()):
     return parse_read_response("vehicle_tab", json.dumps({"resultCode": "200", "data": {
         "category": {"vin": VIN, **(category or {})},
@@ -96,6 +101,7 @@ def test_cache_restart_interval_and_owned_request_scope(account):
     assert "userLatitude" not in requests[1].url and "userLongitude" not in requests[1].url
     assert account["factory"].call_args.kwargs == {"enable_vehicle_tab": True, "allowed_vin": VIN}
     client = AccountClient(account["data"], account["key"], clock=account["clock"], transport_factory=account["factory"])
+    client.set_telemetry_interval(5)
     account["clock"].return_value += 299999
     assert client.update(include_telemetry=True).telemetry == first.telemetry
     assert account["transport"].send.call_count == 2
