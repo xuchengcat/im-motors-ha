@@ -86,6 +86,8 @@ class CategorySnapshot:
         default_factory=lambda: MappingProxyType({}))
     feature_keys: ObservedField = field(default_factory=lambda: ObservedField(Presence.MISSING))
     vin: ObservedField = field(default_factory=lambda: ObservedField(Presence.MISSING))
+    location_fields: Mapping[str, ObservedField] = field(
+        default_factory=lambda: MappingProxyType({}))
 
     def __repr__(self):
         return "CategorySnapshot(<redacted>)"
@@ -125,7 +127,7 @@ class CategorySnapshot:
 
 
 # Wire names/types, not a normalized HA sensor schema. Unknown units (vehOdo,
-# chargedPower, eventTime) remain raw; locations and unrelated fields are omitted.
+# chargedPower, eventTime) remain raw; location observations are validated separately.
 _IDENTITY = {"vin": str, "vehicleName": str, "role": str}
 _VEHICLE = {**_IDENTITY, "type": int, "useStatus": int}
 _MANAGEMENT = {"vehicleName": str, "role": str, "vehicleVersionNumber": str,
@@ -366,4 +368,20 @@ def parse_read_response(operation: str, wire_body: str, *,
         for name, schema in _SECTIONS.items()})
     return CategorySnapshot(_fields(data, _ROOT), period_presence, period,
                             battery_presence, battery, sections, tab_metadata, feature_keys,
-                            _field(data, "vin", str))
+                            _field(data, "vin", str), _location_fields(data.get("period")))
+
+
+def _location_fields(period):
+    """Keep presence separate; malformed location must not break other sensors."""
+    source = period if isinstance(period, dict) else {}
+    fields = {}
+    for name in ("latitude", "longitude", "coOdntSysFmt"):
+        if name not in source:
+            fields[name] = ObservedField(Presence.MISSING)
+        elif source[name] is None:
+            fields[name] = ObservedField(Presence.NULL)
+        else:
+            value = source[name]
+            fields[name] = ObservedField(Presence.VALUE,
+                value if type(value) in (int, float, str) else None)
+    return MappingProxyType(fields)

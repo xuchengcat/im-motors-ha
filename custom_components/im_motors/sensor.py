@@ -64,7 +64,7 @@ class ImMotorsSensor(ImMotorsEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         if self.key == "telemetry_status":
-            return {"pending_fields": ["里程单位", "chargedPower单位", "位置", "完整车锁枚举"],
+            return {"pending_fields": ["里程单位", "chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"],
                     "vehicle_telemetry_enabled": True,
                     "poll_interval_seconds": self.coordinator.telemetry_interval_minutes * 60,
                     "individual_sample_time_verified": False}

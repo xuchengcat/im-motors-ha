@@ -75,8 +75,8 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
     assert devices[0].manufacturer == "IM Motors"
     registry = er.async_get(hass)
     entities = [entity for entity in registry.entities.values() if entity.config_entry_id == entry.entry_id]
-    assert len(entities) == 19 + len(SENSORS) + len(BINARY_SENSORS)
-    assert sum(entity.disabled_by is not None for entity in entities) == len(entities) - len(states) - 1
+    assert len(entities) == 20 + len(SENSORS) + len(BINARY_SENSORS)
+    assert sum(entity.disabled_by is not None for entity in entities) == len(entities) - len(states) - 2
     diagnostics = await async_get_config_entry_diagnostics(hass, entry)
     assert diagnostics["associated_vehicle_count"] == 1
     assert "SYNTHETIC" not in str(diagnostics)
@@ -88,7 +88,7 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
         (second,), snapshot.metadata_time_ms, snapshot.expiration_time_ms, snapshot.refresh_time_ms))
     await hass.async_block_till_done()
     entities = [entity for entity in registry.entities.values() if entity.config_entry_id == entry.entry_id]
-    assert len(entities) == 2 * (19 + len(SENSORS) + len(BINARY_SENSORS))
+    assert len(entities) == 2 * (20 + len(SENSORS) + len(BINARY_SENSORS))
     assert all(hass.states.get(state.entity_id).state == "unavailable" for state in states)
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

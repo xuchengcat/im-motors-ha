@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.3
+
+- Add a GPS device tracker using coordinates already present in the encrypted, VIN-checked v6 cloud snapshot; automatic and manual queries update location together with telemetry.
+- Validate decimal coordinate strings, ranges and missing values separately so malformed location does not break other telemetry.
+- Convert the observed format 1 from GCJ-02 to WGS-84 based on the App 3.2.4 autonavi geocoder call chain; leave unsupported formats unavailable. This interpretation is not a complete manufacturer enum.
+- Preserve snapshot timestamps without claiming an independently verified GPS sampling time or accuracy; keep coordinates out of diagnostics.
+
 ## 0.4.2
 
 - Add a per-vehicle “立即重新查询车况” button to fetch cloud telemetry immediately, bypassing only the local telemetry cache and resetting the next automatic query time.
