@@ -30,6 +30,7 @@ def main():
         for path in sorted(integration.rglob("*")):
             if path.is_file() and path.suffix in (".py", ".json"):
                 bundle.write(path, path.relative_to(integration))
+        bundle.write(ROOT / "LICENSE", "LICENSE")
     checksums = "".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n"
                         for path in (archive, runtime_archive))
     (dist / "SHA256SUMS").write_text(checksums, encoding="ascii")
