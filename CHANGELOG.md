@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+
+- Add a per-vehicle “立即重新查询车况” button to fetch cloud telemetry immediately, bypassing only the local telemetry cache and resetting the next automatic query time.
+- Serialize scheduled and manual account requests; preserve authentication checks, VIN validation and durable failure stops.
+
 ## 0.4.1
 
 - Default cloud vehicle polling to 60 minutes; expose an integer-minute interval during SMS setup and encrypted-session import.

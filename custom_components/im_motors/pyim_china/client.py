@@ -148,7 +148,7 @@ class AccountClient:
                                     fields["hasSetting"].value, fields["hasSupport"].value))
         return tuple(vehicles)
 
-    def update(self, *, include_telemetry=False):
+    def update(self, *, include_telemetry=False, force_telemetry=False):
         """Check auth each minute; metadata/telemetry have separate durable caches."""
         try:
             with key_context(self.key_file), AccountFileLock(self.data_dir):
@@ -186,7 +186,8 @@ class AccountClient:
                 vehicles = tuple(Vehicle(**item) for item in saved["vehicles"])
                 telemetry, telemetry_time = {}, 0
                 if include_telemetry:
-                    telemetry, telemetry_time = self._telemetry(saved, credentials, config, now_ms)
+                    telemetry, telemetry_time = self._telemetry(
+                        saved, credentials, config, now_ms, force=force_telemetry)
                 return AccountSnapshot(vehicles, saved["time_ms"], credentials.expiration_time,
                                        credentials.suggest_refresh_time, MappingProxyType(telemetry), telemetry_time)
         except ClientFailure:
@@ -198,7 +199,7 @@ class AccountClient:
             self._record_fault("account_operation_failed")
             raise ClientFailure("Account operation failed; retained state requires manual review") from None
 
-    def _telemetry(self, metadata, credentials, config, now_ms):
+    def _telemetry(self, metadata, credentials, config, now_ms, *, force=False):
         """Scoped v6 reads only. Encrypted cache and durable pre-request stop marker."""
         reader = OfflineReadClient(config)
         cache = self._vault("ha-telemetry.imvault")
@@ -210,7 +211,7 @@ class AccountClient:
             if (not isinstance(vin, str) or not _VIN.fullmatch(vin) or
                     hashlib.sha256(vin.encode("ascii")).hexdigest() != identifier):
                 raise ResponseError("Cached vehicle association identity invalid")
-        if (saved is None or set(saved["responses"]) != set(vins) or
+        if (force or saved is None or set(saved["responses"]) != set(vins) or
                 now_ms < saved["time_ms"] or now_ms - saved["time_ms"] >= self.telemetry_interval_ms):
             responses = {}
             for identifier, vin in vins.items():
