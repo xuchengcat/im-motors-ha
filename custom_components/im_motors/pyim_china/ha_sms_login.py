@@ -238,7 +238,7 @@ class HaSmsLogin:
                 "refresh_token": result.refresh_token, "expiration_time": result.expiration_time,
                 "suggest_refresh_time": result.suggest_refresh_time,
                 "last_login_attempt": state["attempt_id"]})
-        for name in ("ha-metadata.imvault", "ha-fault.imvault"):
+        for name in ("ha-metadata.imvault", "ha-telemetry.imvault", "ha-fault.imvault"):
             (self.data_dir / name).unlink(missing_ok=True)
         state.update(status="committed")
         state.pop("sms_state_code", None)

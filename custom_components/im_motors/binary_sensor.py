@@ -3,7 +3,8 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import callback
 
-from .entity import ImMotorsEntity
+from .entity import ImMotorsEntity, ImMotorsTelemetryEntity
+from .telemetry import BINARY_SENSORS
 
 PARALLEL_UPDATES = 0
 
@@ -21,6 +22,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 entities.extend(ImMotorsCapability(coordinator, vehicle.identifier, key, name)
                                 for key, name in (("has_setting", "支持场景设置"),
                                                   ("has_support", "支持场景功能")))
+                entities.extend(ImMotorsTelemetryBinarySensor(coordinator, vehicle.identifier, key, spec)
+                                for key, spec in BINARY_SENSORS.items())
         if entities:
             async_add_entities(entities)
 
@@ -39,3 +42,9 @@ class ImMotorsCapability(ImMotorsEntity, BinarySensorEntity):
     @property
     def is_on(self):
         return getattr(self.vehicle, self.key) if self.vehicle else None
+
+
+class ImMotorsTelemetryBinarySensor(ImMotorsTelemetryEntity, BinarySensorEntity):
+    @property
+    def is_on(self):
+        return self.mapped_value

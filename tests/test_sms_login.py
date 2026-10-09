@@ -266,7 +266,7 @@ def test_login_extra_verification_stops_without_retry(account, server_code, expe
 async def test_managed_sms_flow_creates_paths_only_and_loads_entities(hass, account):
     metadata = account["transport"].send.return_value
     account["transport"].send.side_effect = [response({"smsStateCode": "SYNTHETIC-STATE"}),
-        success(account), metadata]
+        success(account), metadata, response({"category": {"vin": "LSY00000000000001"}})]
     sms = backend(account)
     with patch("custom_components.im_motors.config_flow.HaSmsLogin", wraps=HaSmsLogin) as constructor, \
          patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]), \
@@ -290,7 +290,7 @@ async def test_managed_sms_flow_creates_paths_only_and_loads_entities(hass, acco
     assert entry.state is ConfigEntryState.LOADED
     assert set(entry.data) == {"data_dir", "key_file"}
     assert PHONE not in str(entry.as_dict()) and CODE not in str(entry.as_dict())
-    assert account["transport"].send.call_count == 3
+    assert account["transport"].send.call_count == 4
 
 
 async def test_sms_reauth_retains_entry_and_device_identity(hass, account):

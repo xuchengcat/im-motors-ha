@@ -39,11 +39,13 @@ class RestrictedHttpsTransport:
     def __init__(self, *, enable_sms_login=False, enable_vehicle_list=False, enable_last_used=False,
                  enable_management=False,
                  enable_isc_vehicles=False,
-                 enable_vehicle_reads=False, allowed_vin=None,
+                 enable_vehicle_reads=False, enable_vehicle_tab=False, enable_vehicle_refresh=False, allowed_vin=None,
                  timeout=15, max_response_bytes=2 * 1024 * 1024, capture_http_errors=False):
-        if enable_vehicle_reads and not isinstance(allowed_vin, str):
+        if (enable_vehicle_reads or enable_vehicle_tab or enable_vehicle_refresh) and (not isinstance(allowed_vin, str) or not allowed_vin):
             raise TransportError("Owned vehicle scope required")
         self.enable_vehicle_reads = enable_vehicle_reads
+        self.enable_vehicle_tab = enable_vehicle_tab
+        self.enable_vehicle_refresh = enable_vehicle_refresh
         self.enable_sms_login = enable_sms_login
         self.enable_vehicle_list = enable_vehicle_list
         self.enable_last_used = enable_last_used
@@ -75,6 +77,19 @@ class RestrictedHttpsTransport:
                     raise TransportError("Invalid captcha request")
             elif request.method != "POST" or not isinstance(body, bytes) or not body:
                 raise TransportError("Invalid SMS request")
+        elif request.method == "GET" and url.path == "/app/vus/v5/tab/vehicle":
+            if (not self.enable_vehicle_refresh or body is not None
+                    or parse_qsl(url.query, keep_blank_values=True) !=
+                    [("vin", self.allowed_vin), ("operateDevice", "ANDROID")]):
+                raise TransportError("Vehicle refresh permission or owned scope invalid")
+        elif request.method == "GET" and url.path == "/app/vus/v6/tab/vehicle":
+            pairs = parse_qsl(url.query, keep_blank_values=True)
+            if (not self.enable_vehicle_tab or body is not None or len(pairs) != 4
+                    or pairs[:3] != [("sourceCode", "APP"), ("vin", self.allowed_vin),
+                                     ("tabType", "VEHICLE")]
+                    or pairs[3][0] != "terminal" or not pairs[3][1]
+                    or any(c.isspace() or ord(c) < 32 for c in pairs[3][1])):
+                raise TransportError("Vehicle tab permission or owned scope invalid")
         elif request.method == "GET" and url.path in _READ_PATHS:
             if not (self.enable_vehicle_reads or
                     (self.enable_vehicle_list and url.path == "/app/capp-vus/v3/vehicle/info/allVehicle") or

@@ -25,7 +25,7 @@
       },
       "import": {
         "title": "Import an encrypted session",
-        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline.",
+        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline. After setup, read-only cloud vehicle data is polled every five minutes; reads may wake the vehicle.",
         "data": {
           "data_dir": "Encrypted data directory",
           "key_file": "External key file"
@@ -33,7 +33,7 @@
       },
       "sms": {
         "title": "Phone and SMS login",
-        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS.",
+        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS. After setup, read-only cloud vehicle data is polled every five minutes; reads may wake the vehicle.",
         "data": {
           "phone": "Mobile number"
         }
@@ -76,6 +76,40 @@
       "account_binding_required": "The server requires account binding. Complete it in the official app first.",
       "unresolved_request": "A request outcome is unknown, or a login/refresh request is unresolved. Requests stopped. Review retained encrypted state before continuing; do not delete pending files to bypass checks.",
       "login_response_invalid": "The login response was retained encrypted but could not be committed as a valid session. Review it and use recover-login offline. The code will not be submitted automatically again."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "charge_status": {
+        "name": "Charging status",
+        "state": {
+          "none": "None",
+          "on_board_charging": "On board charging",
+          "charge_done": "Charge done",
+          "balancing": "Balancing",
+          "charge_fault": "Charge fault",
+          "connecting": "Connecting",
+          "connected_not_recognized": "Connected not recognized",
+          "connected_not_charged": "Connected not charged",
+          "charge_cease": "Charge cease",
+          "charge_reserved": "Charge reserved",
+          "off_board_charging": "Off board charging",
+          "discharging_gun_connecting": "Discharging gun connecting",
+          "multiple_charging": "Multiple charging",
+          "discharging": "Discharging",
+          "cease": "Cease",
+          "discharging_done": "Discharging done",
+          "wireless_charging": "Wireless charging"
+        }
+      },
+      "driving_state": {
+        "name": "Vehicle operating classification",
+        "state": {
+          "ready": "Ready",
+          "parking": "Parked",
+          "driving": "Driving"
+        }
+      }
     }
   }
 }

@@ -31,6 +31,8 @@ class OfflineReadClient:
         "management": "/app/vus/v4/vehicle/management",
         "isc_vehicles": "/app/vus/v3/isc/scene/vehicleList",
         "category": "/app/capp-vus/v3/vehicle/category/all",
+        "vehicle_tab": "/app/vus/v6/tab/vehicle",
+        "vehicle_refresh": "/app/vus/v5/tab/vehicle",
     }
 
     def __init__(self, config: LocalProductionConfig):
@@ -54,21 +56,32 @@ class OfflineReadClient:
                                    encrypt_key=self._config.encrypt_key)
 
     def prepare(self, operation: str, *, nonce: str, timestamp_ms: int,
-                baseline_headers: Mapping[str, str], vin: str | None = None) -> PreparedReadRequest:
+                baseline_headers: Mapping[str, str], vin: str | None = None,
+                terminal: str | None = None) -> PreparedReadRequest:
         if operation not in self._paths:
             raise ValueError("Unsupported read operation")
         if not isinstance(nonce, str) or not nonce or "\r" in nonce or "\n" in nonce:
             raise ValueError("Invalid nonce")
         if isinstance(timestamp_ms, bool) or not isinstance(timestamp_ms, int) or timestamp_ms <= 0:
             raise ValueError("Invalid timestamp")
-        if operation == "category":
+        if operation in ("category", "vehicle_tab", "vehicle_refresh"):
             if not isinstance(vin, str) or not vin:
                 raise ValueError("VIN required for category read")
             query = "vin=" + quote(vin, safe="", encoding="utf-8")
+            if operation == "vehicle_refresh":
+                query += "&operateDevice=ANDROID"
+            if operation == "vehicle_tab":
+                if not isinstance(terminal, str) or not terminal or any(c.isspace() for c in terminal):
+                    raise ValueError("Persistent client model required for terminal")
+                # VehicleControlApi.W/U: source APP, owned vehicle, no user location.
+                query = ("sourceCode=APP&" + query + "&tabType=VEHICLE&terminal="
+                         + quote(terminal, safe="", encoding="utf-8"))
         else:
             if vin is not None:
                 raise ValueError("Vehicle lists do not accept a VIN parameter")
             query = None
+        if terminal is not None and operation != "vehicle_tab":
+            raise ValueError("Terminal applies only to vehicle tab")
         headers = {}
         seen = set()
         reserved = {"x-app-key", "x-nonce", "x-timestamp", "x-signature", "encrypt"}

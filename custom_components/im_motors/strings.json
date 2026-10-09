@@ -25,7 +25,7 @@
       },
       "import": {
         "title": "导入已有加密会话",
-        "description": "用于导入已有加密会话，填写 session.imvault、device.imvault 所在目录及匹配密钥。已有 production.imvault 可继续使用，未提供时使用随集成发布的通用协议配置。此步骤离线检查。",
+        "description": "用于导入已有加密会话，填写 session.imvault、device.imvault 所在目录及匹配密钥。已有 production.imvault 可继续使用，未提供时使用随集成发布的通用协议配置。此步骤离线检查。 配置完成后每五分钟读取云端车况；只读查询也可能唤醒车辆。",
         "data": {
           "data_dir": "加密数据目录",
           "key_file": "外置密钥文件"
@@ -33,7 +33,7 @@
       },
       "sms": {
         "title": "手机号与短信登录",
-        "description": "输入中国大陆手机号并提交发送短信，然后填写短信验证码完成登录。账号密钥在本机自动生成，手机号不会保存到 HA 配置。已有有效验证码流程会继续使用，不重复发短信。",
+        "description": "输入中国大陆手机号并提交发送短信，然后填写短信验证码完成登录。账号密钥在本机自动生成，手机号不会保存到 HA 配置。已有有效验证码流程会继续使用，不重复发短信。 配置完成后每五分钟读取云端车况；只读查询也可能唤醒车辆。",
         "data": {
           "phone": "手机号"
         }
@@ -76,6 +76,40 @@
       "account_binding_required": "服务端要求账号绑定，请先在官方应用完成。",
       "unresolved_request": "请求结果不明或已有未解决的登录/刷新请求。已停止重发，请先检查保留的加密状态；不要删除 pending 文件绕过检查。",
       "login_response_invalid": "登录响应已加密保留，但无法提交有效会话。请排查并使用 recover-login 离线恢复；不会自动再次提交验证码。"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "charge_status": {
+        "name": "充电状态",
+        "state": {
+          "none": "未充电",
+          "on_board_charging": "车载充电",
+          "charge_done": "充电完成",
+          "balancing": "均衡充电",
+          "charge_fault": "充电故障",
+          "connecting": "连接中",
+          "connected_not_recognized": "已连接但未识别",
+          "connected_not_charged": "已连接但未充电",
+          "charge_cease": "充电中止",
+          "charge_reserved": "预约充电",
+          "off_board_charging": "非车载充电",
+          "discharging_gun_connecting": "放电枪连接中",
+          "multiple_charging": "多路充电",
+          "discharging": "放电中",
+          "cease": "中止",
+          "discharging_done": "放电完成",
+          "wireless_charging": "无线充电"
+        }
+      },
+      "driving_state": {
+        "name": "车辆运行分类",
+        "state": {
+          "ready": "就绪",
+          "parking": "驻车",
+          "driving": "行驶"
+        }
+      }
     }
   }
 }

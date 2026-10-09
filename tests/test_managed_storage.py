@@ -116,7 +116,8 @@ async def test_full_new_install_phone_only_restart_duplicate_and_reauth(hass, ac
     def make_client(data_dir, key_file):
         return AccountClient(data_dir, key_file, transport_factory=account["factory"], clock=account["clock"])
     metadata = account["transport"].send.return_value
-    account["transport"].send.side_effect = [response({"smsStateCode": "SYNTHETIC-STATE"}), success(account), metadata]
+    account["transport"].send.side_effect = [response({"smsStateCode": "SYNTHETIC-STATE"}), success(account), metadata,
+        response({"category": {"vin": "LSY00000000000001"}})]
     with patch("custom_components.im_motors.config_flow.HaSmsLogin", wraps=HaSmsLogin) as constructor, \
             patch("custom_components.im_motors.pyim_china.AccountClient", side_effect=make_client):
         constructor.side_effect = make_sms
@@ -140,18 +141,19 @@ async def test_full_new_install_phone_only_restart_duplicate_and_reauth(hass, ac
         assert dict(entry.data) == paths
         assert not (Path(paths["data_dir"]) / "production.imvault").exists()
         assert PHONE not in str(entry.as_dict()) and CODE not in str(entry.as_dict())
-        assert account["transport"].send.call_count == 3
+        assert account["transport"].send.call_count == 4
         # Restart uses the same key/device and cached metadata; no extra HTTP.
         assert await hass.config_entries.async_reload(entry.entry_id)
         await hass.async_block_till_done()
-        assert account["transport"].send.call_count == 3
+        assert account["transport"].send.call_count == 4
         menu = await hass.config_entries.flow.async_init("im_motors", context={"source": "user"})
         form = await hass.config_entries.flow.async_configure(menu["flow_id"], {"next_step_id": "sms"})
         result = await hass.config_entries.flow.async_configure(form["flow_id"], {"phone": PHONE})
         assert result["reason"] == "already_configured"
-        assert account["transport"].send.call_count == 3
+        assert account["transport"].send.call_count == 4
         account["clock"].return_value = account["now"] + 60000
-        account["transport"].send.side_effect = [response({"smsStateCode": "SYNTHETIC-STATE"}), success(account), metadata]
+        account["transport"].send.side_effect = [response({"smsStateCode": "SYNTHETIC-STATE"}), success(account), metadata,
+            response({"category": {"vin": "LSY00000000000001"}})]
         menu = await hass.config_entries.flow.async_init("im_motors", context={"source": "reauth", "entry_id": entry.entry_id})
         form = await hass.config_entries.flow.async_configure(menu["flow_id"], {"next_step_id": "sms"})
         form = await hass.config_entries.flow.async_configure(form["flow_id"], {"phone": PHONE})
@@ -162,7 +164,7 @@ async def test_full_new_install_phone_only_restart_duplicate_and_reauth(hass, ac
         assert Path(paths["key_file"]).read_bytes() == initial_key
         assert (Path(paths["data_dir"]) / "device.imvault").read_bytes() == initial_device
         assert dict(entry.data) == paths
-        assert account["transport"].send.call_count == 6
+        assert account["transport"].send.call_count == 8
 
 
 async def test_invalid_phone_and_storage_failure_do_not_send_sms(hass, account):

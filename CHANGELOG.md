@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+- Replace pending vehicle data with VIN-scoped v6 reads, cached for five minutes across manual updates and restarts. Reads may wake the vehicle.
+- Add battery percentage, separate CLTC/estimated ranges, four tyre pressures and temperatures, cabin/outside/weather temperatures, and left/right AC setpoints.
+- Add doors, covers, window positions, online/connected flags, observed App lock display and the APK's combined operating classification.
+- Map 17 charging states, feature-dependent charge target and reservation times. Gate current durations/power by explicit charging modes; retain cached raw durations separately.
+- Extend the parser to 129 category model fields, feature presence and homepage metadata without exposing locations or private identity in HA entities.
+- Keep missing/null/unknown values unknown; leave odometer and chargedPower unitless, and disable raw seat/steering/state diagnostics by default.
+- Show cloud snapshot/retrieval timestamps and source presence; root freshness does not establish individual sensor freshness.
+- Reject missing or mismatched response VINs and preserve encrypted responses and a durable failure marker before retry could occur. Authentication remains manual after failure.
+- Preserve SMS setup, old credentials, hashed device identities and disabled legacy placeholders. Validate HA lifecycle, cache, crash and cross-VIN isolation using synthetic fixtures.
+
+Mapping evidence covers an LS6. Other models and long-running live HA polling need deployment validation; no vehicle controls, location or active refresh flow are introduced.
+
 ## 0.3.0
 
 - Bundle common protocol parameters separately from personal account storage.

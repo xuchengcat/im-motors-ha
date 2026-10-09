@@ -1,5 +1,6 @@
 """A minute auth heartbeat with SDK-enforced metadata caching and failure stops."""
 from datetime import timedelta
+from functools import partial
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -21,7 +22,7 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
 
     async def _async_update_data(self):
         try:
-            return await self.hass.async_add_executor_job(self.client.update)
+            return await self.hass.async_add_executor_job(partial(self.client.update, include_telemetry=True))
         except LoginRequired:
             raise ConfigEntryAuthFailed("Manual account login required") from None
         except ClientFailure:
