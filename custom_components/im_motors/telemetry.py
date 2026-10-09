@@ -23,6 +23,7 @@ SENSORS = {
     "soc_secondary": FieldSpec("电量（BMS 显示字段）", "period", "bmsPackSOCDsp", "%", SensorDeviceClass.BATTERY, "percent", True),
     "cltc_range": FieldSpec("CLTC 续航", "period", "cltcVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
     "estimated_range": FieldSpec("估算续航", "period", "imcuVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
+    "odometer": FieldSpec("总里程", "period", "vehOdo", "km", SensorDeviceClass.DISTANCE, "odometer"),
     "cabin_temperature": FieldSpec("车内温度", "period", "acInCarTemperature", "°C", SensorDeviceClass.TEMPERATURE),
     "outside_temperature": FieldSpec("车辆外温", "period", "outsideCarTemperature", "°C", SensorDeviceClass.TEMPERATURE),
     "weather_temperature": FieldSpec("天气温度", "weatherInfo", "temperature", "°C", SensorDeviceClass.TEMPERATURE, "weather"),
@@ -40,7 +41,7 @@ SENSORS = {
     "vehicle_series": FieldSpec("首页车辆系列", "vehicleFunction", "vehicleSeries", diagnostic=True),
     "tab_project_code": FieldSpec("首页车型项目代码", "vehicleFunction", "projectCode", diagnostic=True),
     "vehicle_updated": FieldSpec("云端车况更新时间", "root", "updateTime", device_class=SensorDeviceClass.TIMESTAMP, conversion="timestamp", diagnostic=True),
-    "odometer_raw": FieldSpec("里程原始码（单位待定）", "period", "vehOdo", diagnostic=True),
+    "odometer_raw": FieldSpec("里程原始值", "period", "vehOdo", diagnostic=True),
     "charged_power_raw": FieldSpec("chargedPower 原始值（单位待定）", "period", "chargedPower", diagnostic=True),
     "lock_raw": FieldSpec("车锁原始码", "lock", "vehLockingState", diagnostic=True),
     "charge_status_raw": FieldSpec("充电状态原始码", "hvBattery", "bmsChargeStatus", diagnostic=True),
@@ -130,6 +131,9 @@ def normalized(snapshot, spec):
         return f"{hour:02d}:{minute:02d}" if hour is not None and minute is not None and 0 <= hour < 24 and 0 <= minute < 60 else None
     if value is None:
         return None
+    if conversion == "odometer":
+        # Integer kilometres; sentinel/negative values are not a meter reset.
+        return value if type(value) is int and 0 <= value < 0x7FFFFFFF else None
     if conversion == "percent":
         return value if 0 <= value <= 100 else None
     if conversion == "nonnegative":

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4
+
+- Add an enabled-by-default total mileage sensor from `period.vehOdo`, mapped directly to integer km after corroboration with the owner’s LS6 instrument cluster. Other models still require verification.
+- Use distance device class and cumulative total statistics without a reset timestamp; share existing automatic and manual telemetry reads.
+- Keep valid zero, reject missing/negative/out-of-range readings instead of fabricating zero, and preserve the historical raw diagnostic and pending entity identities.
+
 ## 0.4.3
 
 - Add a GPS device tracker using coordinates already present in the encrypted, VIN-checked v6 cloud snapshot; automatic and manual queries update location together with telemetry.

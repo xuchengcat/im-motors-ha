@@ -1,4 +1,4 @@
-# 车辆数据对应关系（v0.4.3）
+# 车辆数据对应关系（v0.4.4）
 
 本版将已确认字段接入 HA。依据包括授权 LS6 云端正文、APK 模型与展示调用，以及手机首页、胎压和充电设置页面。手机页面与云端正文不是同时采样，能支持字段对应，不证明每个值长期实时。
 
@@ -18,6 +18,7 @@
 |---|---|
 | 电量 | `period.originalBmsPackSOCDsp`，0..100%，保留原始小数，不模仿 App 取整 |
 | CLTC / 估算续航 | `period.cltcVehElecRng` / `imcuVehElecRng`，km，分开显示，不为所有车型决定首页算法 |
+| 总里程 | `period.vehOdo`，整数 km，不缩放、不加偏移；LS6 本车仪表盘已核对；缺失、null、负数和32位最大值及以上不展示，合法0保留 |
 | 四轮胎压 | `period.frontLeft/frontRight/rearLeft/rearRightTirePressure`，浮点除以100为 bar；保留两位精度，非正数或相应 `warning.*TireStatus=1` 不显示 |
 | 四轮胎温 | `period.fl/fr/rl/rrTireTem`，°C，四轮独立 |
 | 车内 / 车辆外温 | `period.acInCarTemperature` / `outsideCarTemperature`，°C |
@@ -76,7 +77,7 @@ App 可能按在线、蓝牙来源、车型功能或控制进度改变显示。�
 
 解析器保留129个已找到模型类型的 category 字段，类型与含义分开验证。新增默认禁用的诊断实体包括：BMS 显示 SOC、原始充电状态、原始剩余/耗时、车锁原码、方向盘加热及16个座椅加热/通风级别。座椅 `fl/fr/sl/sm/sr/tl/tm/tr` 分别保留，缺失座位不填0，未闭合的档位不包装成控制选项。
 
-`period.vehOdo` 保留为无单位诊断。车辆健康页是独立 H5，其里程与原码不同，未取得同一来源的字段链；不发布总里程 km、不调整偏移。`period.chargedPower` 传递链已找到，但显示单位未闭合，保留无单位诊断，不加 kWh 或能量统计类别。定位以以下章节为准。
+`period.vehOdo` 的 km 单位已与本车车辆仪表盘相同读数对照确认，默认启用独立总里程实体（key=odometer），不加偏移。健康页是独立 H5，其历史读数存在差异；该页的来源和独立更新时间仍未确认，不替代车况数据。历史原始里程诊断仍保留无单位身份以避免改变已有记录。累计里程采用 `SensorStateClass.TOTAL`，无 `last_reset`，不把云端旧快照可能造成的下降解释为计数器归零；选择依据 [HA 传感器文档](https://developers.home-assistant.io/docs/core/entity/sensor/#how-to-choose-state_class-and-last_reset)。其他车型单位仍需实车验证。`period.chargedPower` 传递链已找到，但显示单位未闭合，保留无单位诊断，不加 kWh 或能量统计类别。定位以以下章节为准。
 
 旧版11个占位实体保持默认禁用和 unavailable，供既有安装保留身份；实际读数使用新增实体，启用占位不会产生读数。
 

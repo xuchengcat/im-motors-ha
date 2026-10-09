@@ -64,7 +64,7 @@ class ImMotorsSensor(ImMotorsEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         if self.key == "telemetry_status":
-            return {"pending_fields": ["里程单位", "chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"],
+            return {"pending_fields": ["chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"],
                     "vehicle_telemetry_enabled": True,
                     "poll_interval_seconds": self.coordinator.telemetry_interval_minutes * 60,
                     "individual_sample_time_verified": False}
@@ -85,7 +85,7 @@ class PendingSensor(ImMotorsEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self):
-        return {"解析状态": "待定", "reason": "旧版占位实体；请使用新版对应实体，里程单位和位置仍待定"}
+        return {"解析状态": "待定", "reason": "旧版占位实体；请使用新版对应实体"}
 
 
 class ImMotorsTelemetrySensor(ImMotorsTelemetryEntity, SensorEntity):
@@ -94,6 +94,10 @@ class ImMotorsTelemetrySensor(ImMotorsTelemetryEntity, SensorEntity):
         self._attr_native_unit_of_measurement = spec.unit
         if spec.unit and not spec.diagnostic:
             self._attr_state_class = SensorStateClass.MEASUREMENT
+        if key == "odometer":
+            self._attr_state_class = SensorStateClass.TOTAL
+            self._attr_suggested_display_precision = 0
+            self._attr_icon = "mdi:counter"
         if key == "charge_status":
             self._attr_device_class = SensorDeviceClass.ENUM
             self._attr_translation_key = key

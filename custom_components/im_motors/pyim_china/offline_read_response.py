@@ -126,8 +126,8 @@ class CategorySnapshot:
         return None if value is None or value < 0 else value == 1023
 
 
-# Wire names/types, not a normalized HA sensor schema. Unknown units (vehOdo,
-# chargedPower, eventTime) remain raw; location observations are validated separately.
+# Wire names/types, not a normalized HA sensor schema. Units and semantics are
+# normalized separately; location observations are validated independently.
 _IDENTITY = {"vin": str, "vehicleName": str, "role": str}
 _VEHICLE = {**_IDENTITY, "type": int, "useStatus": int}
 _MANAGEMENT = {"vehicleName": str, "role": str, "vehicleVersionNumber": str,

@@ -15,4 +15,4 @@ async def async_get_config_entry_diagnostics(hass, entry):
             "individual_sample_time_verified": False,
             "vehicle_location_enabled": True,
             "vehicles_with_location": sum(coordinates(v) is not None for v in snapshot.telemetry.values()) if snapshot else 0,
-            "pending_fields": ["里程单位", "chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"]}
+            "pending_fields": ["chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"]}
