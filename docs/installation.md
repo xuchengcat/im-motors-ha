@@ -1,31 +1,68 @@
-# 短信登录、安装与恢复
+# 短信登录、更新与恢复
 
-v0.2.0 可在 HA 配置界面完成手机号与短信登录，也保留已有会话导入方式。
-登录前须准备 `production.imvault` 和与其匹配的外置密钥；协议配置初始化仍需在集成外完成。
-未准备这两个私人文件时，可以安装代码，但无法发送短信或完成配置。
+v0.3.0 新安装只需手机号和短信验证码，无需准备 `production.imvault` 或挂载密钥。
+通用协议参数随集成发布；保护账号会话的密钥在每个 HA 实例本地随机生成。
 
-## 文件与路径
+## 新账号配置
 
-短信登录需要协议配置和外置密钥；若已有会话，请保留同一客户端身份的完整当前文件：
+1. 在 HACS 自定义存储库中添加 `https://github.com/xuchengcat/im-motors-ha`，类型选择集成。
+2. 下载最新版本，重启 HA。
+3. 在“设置 → 设备与服务 → 添加集成”选择“智己汽车（只读）”。
+4. 选择“手机号与短信登录”，输入中国大陆手机号，提交发送短信。
+5. 输入收到的短信验证码并提交。登录后首次加载会读取关联车辆元数据。
 
-| 文件 | 容器内示例路径 | 用途 |
-|---|---|---|
-| `session.imvault` | `/config/im_motors/data/session.imvault` | 当前 token、认证时间和会话状态；首次短信登录成功时创建 |
-| `device.imvault` | `/config/im_motors/data/device.imvault` | 持久客户端身份；首次短信登录流程创建 |
-| `production.imvault` | `/config/im_motors/data/production.imvault` | 加密的协议配置 |
-| 外置 32 字节密钥 | `/run/secrets/im_vault_key` | 解密上述文件，须与其匹配 |
+需要新验证码时勾选“重新发送验证码”，验证码可留空；重发间隔至少 60 秒。
+本地验证码流程有效期 10 分钟，服务端可能更早过期。
+关闭页面后，重新输入同一手机号可以继续有效流程，无需重发。
+手机号和验证码不会保存到 HA 配置中，界面无需填写目录或密钥路径。
 
-密钥单独只读挂载，数据目录可写。Linux 目录建议 0700、文件 0600，所有者须为 HA 进程用户。
-HA 配置仅保存两个路径和客户端身份哈希，不保存手机号、验证码、密钥或 token 内容。
-短信流程的状态及服务端响应加密保存在 `ha-login.imvault`。手机号仅在当前流程内存中使用，
-持久状态使用绑定客户端身份的手机号哈希以便重启后匹配同一验证码流程。
+服务端要求图形/风控验证或账号绑定时，流程停止并显示提示。这些额外步骤暂未在 HA 实现。
+新版验证使用真实 HA 框架和 mock HTTP；实际账号登录及 HA OS 部署仍需实际环境验证。
 
-不要用旧登录响应覆盖轮换后的会话。迁移时复制完整当前数据目录，保留 pending 状态及
-`attempts/`，也不要交替刷新多个会话副本。
+## 本地存储与备份
 
-## 已有 Home Assistant Container
+新账号的存储自动放在 HA 配置目录内，通常为 `/config/.storage/im_motors/`：
 
-在已有 Compose 的 HA 服务中增加挂载，例如：
+| 文件或目录 | 用途 |
+|---|---|
+| `vault.key` | 本机随机生成的 32 字节账号加密密钥，每个 HA 实例独立 |
+| `storage.imvault` | 用于确认密钥仍与已有存储匹配的加密标记 |
+| `accounts/<账号哈希>/device.imvault` | 持久客户端身份 |
+| `accounts/<账号哈希>/session.imvault` | 当前 token、认证时间和会话状态 |
+| `accounts/<账号哈希>/ha-login.imvault` | 短信流程、请求状态和加密响应 |
+| `accounts/<账号哈希>/attempts/` | 刷新尝试及离线恢复材料 |
+
+账号目录名使用本地密钥计算手机号 HMAC，不直接存放手机号。HA 配置只保存路径及客户端身份哈希。
+Linux 下新密钥和加密文件使用 0600 权限，新账号目录使用 0700，文件所有者须为 HA 进程用户。
+
+通用协议参数位于代码包的 `pyim_china/protocol.json`，不含手机号、token、VIN、设备身份或本地账号密钥。
+公开这些协议参数不能解密账号会话。`vault.key` 和加密会话必须作为私人数据保留在本机。
+
+备份时保留**整个 `.storage/im_motors/` 目录**，包括密钥、标记、所有账号和 pending 状态。
+HACS 更新只更新 `custom_components/im_motors/` 下的代码，不更换密钥或账号数据。
+密钥丢失、被替换或损坏时会停止配置；请恢复完整匹配备份，不会自动生成新密钥覆盖已有数据。
+
+删除 HA 集成条目不会自动清除这个目录，以便继续未完成流程或离线排查。
+不要把目录上传到 GitHub，也不要交替使用多个会话副本刷新同一账号。
+
+## 从 v0.1.0 / v0.2.0 更新
+
+在 HACS 下载 v0.3.0 后重启 HA，已有数据、设备身份和实体保留，不会自动迁移加密文件或替换密钥。
+原来通过外置路径配置的账号继续使用原目录和原密钥，因此已有挂载需保留。
+已有 `production.imvault` 继续作为自定义协议配置使用；未提供时使用安装包中的通用配置。
+已有文件损坏或解密失败时会报错，不会悄悄回退到通用配置。
+
+重新登录时打开集成的“重新配置 → 手机号与短信登录”，只需填写手机号和验证码。
+认证过期后的“重新认证”也提供同一入口。请使用原账号重新认证。
+新账号应从“添加集成”进入，自动创建独立账号目录。
+
+## 导入已有加密会话
+
+此方式适合旧账号迁移和高级配置。选择“导入已有加密会话”，填写已有数据目录与匹配密钥的绝对路径。
+目录中须有同一客户端身份的 `session.imvault` 和 `device.imvault`；`production.imvault` 可选。
+导入步骤只离线检查，完成后首次加载查询关联车辆元数据。
+
+Home Assistant Container 的旧挂载示例：
 
 ```yaml
 volumes:
@@ -34,85 +71,38 @@ volumes:
   - /srv/im-motors/secrets/vault.key:/run/secrets/im_vault_key:ro
 ```
 
-集成代码由 HACS 安装到可写的 `/config/custom_components/im_motors/`。
-不要再用只读 bind mount 覆盖这个代码目录，否则 HACS 无法更新它。
-
-重启 HA，在“添加集成”选择“智己汽车（只读）”，填写：
-
-- 数据目录：`/config/im_motors/data`
-- 密钥文件：`/run/secrets/im_vault_key`
-
-选择“手机号与短信登录”，输入手机号和上述路径，然后提交发送短信。
-收到短信后输入验证码提交登录。需要新验证码时勾选“重新发送验证码”，验证码可留空；
-重发须间隔至少 60 秒。本地流程有效期 10 分钟，服务端验证码可能更早过期。
-关闭流程后，只要状态有效，在同一路径重新输入同一手机号可继续使用已有验证码，无需重发。
-
-已有会话可选择“导入已有加密会话”，该步骤仅离线检查。
-配置完成后首次加载会请求关联车辆元数据。
-Home Assistant OS 等环境也需提供 HA 进程能够访问的绝对路径；本项目尚未验证这些环境。
-
-## 从 v0.1.0 更新及重新登录
-
-在 HACS 下载 v0.2.0 并重启 HA，已有数据和实体无需重新建立。
-需要短信登录时，在集成菜单选择“重新配置 → 手机号与短信登录”；认证过期时的
-“重新认证”也提供短信登录及导入选项。路径默认沿用当前配置，客户端身份保持不变。
-请使用原账号重新认证；切换其他账号时应使用独立的数据目录并添加新的集成。
-
-提交手机号前会离线检查配置、身份和未解决的刷新状态。提交后才发送短信；
-检查验证码格式不合格或本地流程过期时，不会提交登录请求。
-服务端要求图形/风控验证或账号绑定时，界面会停止并提示；这些额外步骤尚未在 HA 实现。
-
-## 独立 Docker 模板
-
-仓库 `docker/compose.yaml` 是独立 HA 容器模板，采用源码只读挂载，适合手工安装测试。
-它不适合在同一代码路径上同时使用 HACS 更新。
-
-```sh
-cd docker
-cp compose.env.example compose.env
-# 设置 Linux 主机目录及 HA 进程的 UID/GID。
-docker compose --env-file compose.env config
-docker compose --env-file compose.env up -d
-```
-
-模板固定在测试过的 HA 2026.2.3。实际 Docker 启动仍未验证。
+使用新短信登录方式时，已有 `/config` 持久卷即可，不需要后两项账号挂载。
+HACS 需要可写的 `/config/custom_components/im_motors/`；不要用只读 bind mount 覆盖代码目录。
+仓库 `docker/compose.yaml` 保留为旧路径的独立手工测试模板，不适合同时使用 HACS 更新代码。
 
 ## 自动刷新与请求停止
 
-每分钟检查本地认证时间，未到服务器建议刷新时间时不发送认证请求。
-账号场景元数据缓存 30 分钟。手动更新实体也不能绕过缓存间隔。
+每分钟检查本地认证时间，到服务器建议刷新时间才发送认证请求。账号场景元数据缓存 30 分钟，
+手动更新实体也不能绕过缓存间隔。短信登录期间暂停账号读取及刷新。
 
-元数据请求执行中断或失败时保留 `ha-fault.imvault`，后续周期和 HA 重启都不自动重发。
-刷新存在 pending 状态时，也会阻止继续发请求。
+未知短信、登录或刷新结果会持久停止重发；元数据失败保留故障标记。HA 重启不会绕过这些检查。
+不要通过删除 pending 文件或 `ha-login.imvault` 继续未知请求。
 
 恢复流程：
 
 1. 暂停集成，检查保留的故障和 pending 状态。
-2. 如果成功刷新响应已保存，可用下面的离线工具恢复；结果未知时先人工排查。
-3. 认证过期时，使用 HA 的“重新认证 → 手机号与短信登录”，或导入同一客户端身份的有效会话。
-4. 完成排查后，在集成“重新配置 → 更新路径或恢复请求”勾选恢复请求；未解决的 pending 仍会阻止恢复。
+2. 成功响应已保存时，可使用离线工具恢复；结果未知时先人工排查。
+3. 认证过期时，使用“重新认证 → 手机号与短信登录”，或导入同一客户端身份的有效会话。
+4. 排查完成后，在“重新配置 → 更新路径或恢复请求”勾选恢复请求；未解决的 pending 仍会阻止恢复。
 
-短信登录期间暂停账号读取及刷新。短信或登录请求结果不明时，保留状态并停止重发。
-不要通过删除 pending 文件或 `ha-login.imvault` 来绕过未知请求结果。
-若登录成功响应已加密保存，但解析或会话提交中断，可用 `recover-login` 离线恢复。
-它不发送短信或登录请求，也不会覆盖登录开始后被其他进程更改的会话。
-
-仓库工程内工具，从工程根目录执行：
+完整工程内的离线工具，从工程根目录执行；按实际账号路径替换“账号哈希”和刷新文件名：
 
 ```sh
-python tools/account_cli.py --data-dir /config/im_motors/data \
-  --key-file /run/secrets/im_vault_key check
-python tools/account_cli.py --data-dir /config/im_motors/data \
-  --key-file /run/secrets/im_vault_key recover-login
-python tools/account_cli.py --data-dir /config/im_motors/data \
-  --key-file /run/secrets/im_vault_key recover-refresh \
-  --result /config/im_motors/data/attempts/refresh-实际文件名.imvault
+python tools/account_cli.py --data-dir /config/.storage/im_motors/accounts/账号哈希 \
+  --key-file /config/.storage/im_motors/vault.key check
+python tools/account_cli.py --data-dir /config/.storage/im_motors/accounts/账号哈希 \
+  --key-file /config/.storage/im_motors/vault.key recover-login
+python tools/account_cli.py --data-dir /config/.storage/im_motors/accounts/账号哈希 \
+  --key-file /config/.storage/im_motors/vault.key recover-refresh \
+  --result /config/.storage/im_motors/accounts/账号哈希/attempts/refresh-实际文件名.imvault
 ```
 
-这些命令不会发送 HTTP。HACS 运行包不包含 `tools/`，需要工具时下载完整工程或克隆仓库。
-单独运行工具的 Python 环境需安装 PyCryptodome。
+这些命令不发送 HTTP。`recover-login` 不重发短信或验证码，也不会覆盖登录开始后被其他进程改变的会话。
+HACS 运行包不包含 `tools/`，需要时下载完整工程或克隆仓库。独立 Python 环境需安装 PyCryptodome。
 
-## 备份与反馈
-
-运行数据和外置密钥一起构成完整备份，请分别保存在不同位置。HACS 更新不会下载或替换这些文件。
-反馈问题时优先提供 HA 脱敏诊断、HA 版本和错误类别，不提交真实账号资料或完整响应。
+反馈问题时优先提供 HA 脱敏诊断、HA 版本和错误类别，不提交账号目录、密钥或完整响应。

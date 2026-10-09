@@ -10,6 +10,8 @@ from homeassistant.helpers import selector
 from .const import DOMAIN, CONF_DATA_DIR, CONF_KEY_FILE, CONF_RESUME
 from .pyim_china import AccountClient, ClientFailure, LoginRequired
 from .pyim_china.ha_sms_login import HaSmsLogin, SmsLoginFailure
+from .pyim_china.managed_storage import managed_paths
+from .pyim_china.credential_store import VaultError
 
 
 async def validate_input(hass: HomeAssistant, data):
@@ -73,11 +75,15 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
             if not HaSmsLogin.valid_phone(user_input["phone"]):
                 errors["phone"] = "invalid_phone"
             else:
-                paths = {key: user_input[key] for key in (CONF_DATA_DIR, CONF_KEY_FILE)}
-                sms = HaSmsLogin(paths[CONF_DATA_DIR], paths[CONF_KEY_FILE])
                 try:
-                    identity = await self.hass.async_add_executor_job(sms.prepare)
                     entry = self._login_entry()
+                    if entry:
+                        paths = {key: entry.data[key] for key in (CONF_DATA_DIR, CONF_KEY_FILE)}
+                    else:
+                        paths = await self.hass.async_add_executor_job(managed_paths,
+                            self.hass.config.path(".storage", DOMAIN), user_input["phone"])
+                    sms = HaSmsLogin(paths[CONF_DATA_DIR], paths[CONF_KEY_FILE])
+                    identity = await self.hass.async_add_executor_job(sms.prepare)
                     if entry:
                         if identity != entry.unique_id:
                             return self.async_abort(reason="wrong_account")
@@ -86,6 +92,8 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                         self._abort_if_unique_id_configured()
                     self._sms, self._paths = sms, paths
                     completed = await self.hass.async_add_executor_job(sms.start, user_input["phone"])
+                except (VaultError, OSError):
+                    errors["base"] = "invalid_storage"
                 except SmsLoginFailure as error:
                     if error.error in ("captcha_required", "account_binding_required",
                                        "unresolved_request", "login_response_invalid"):
@@ -95,7 +103,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                     if completed:
                         return await self._finish_login()
                     return await self.async_step_sms_code()
-        schema = self._path_schema().extend({vol.Required("phone"): str})
+        schema = vol.Schema({vol.Required("phone"): str})
         return self.async_show_form(step_id="sms", data_schema=schema, errors=errors)
 
     async def async_step_sms_code(self, user_input=None):

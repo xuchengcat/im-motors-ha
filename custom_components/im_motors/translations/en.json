@@ -25,7 +25,7 @@
       },
       "import": {
         "title": "Import an encrypted session",
-        "description": "Mount session, device and production .imvault files and their matching key for the same client. This step checks files offline. Vehicle metadata is queried after setup. Resolve pending login or refresh requests first.",
+        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline.",
         "data": {
           "data_dir": "Encrypted data directory",
           "key_file": "External key file"
@@ -33,10 +33,8 @@
       },
       "sms": {
         "title": "Phone and SMS login",
-        "description": "Enter a mainland China mobile number. First mount production.imvault and its matching external key as described in the installation guide. The data directory must be writable. Submitting sends an SMS, or resumes a valid pending challenge. HA configuration does not store the phone number.",
+        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS.",
         "data": {
-          "data_dir": "Encrypted data directory",
-          "key_file": "External key file",
           "phone": "Mobile number"
         }
       },
@@ -59,14 +57,15 @@
       }
     },
     "error": {
-      "invalid_vault": "Unable to read protected configuration. Check paths, key, UID, permissions, client identity and pending refresh state.",
+      "invalid_vault": "Unable to read encrypted account files or protocol configuration. Check the key, directory permissions, client identity and pending state.",
       "login_required": "Session expired or refresh metadata incomplete. Reauthenticate by SMS or import a valid session.",
       "invalid_phone": "Enter an 11-digit mainland China mobile number without +86, spaces or other characters.",
       "invalid_code": "Enter a verification code of 4 to 8 digits.",
       "sms_cooldown": "Wait at least 60 seconds after the last SMS request before submitting again.",
       "sms_rejected": "The server rejected the SMS request. Check your account and try again later.",
       "login_rejected": "The server rejected login. Check your code, or select resend to request a new code.",
-      "code_expired": "The local verification flow expired. Select resend to request a new code."
+      "code_expired": "The local verification flow expired. Select resend to request a new code.",
+      "invalid_storage": "Unable to initialize local account storage. Check permissions in the HA configuration directory. For existing data, restore the matching key and storage marker; missing or damaged keys are never replaced automatically."
     },
     "abort": {
       "already_configured": "This client identity is already configured.",

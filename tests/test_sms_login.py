@@ -93,6 +93,10 @@ def test_missing_config_and_pending_refresh_stop_before_sms(account):
     (account["data"] / "production.imvault").unlink()
     with pytest.raises(SmsLoginFailure) as error:
         backend(account).prepare()
+    assert error.value.error == "unresolved_request"
+    (account["data"] / "production.imvault").write_bytes(b"BROKEN-VAULT")
+    with pytest.raises(SmsLoginFailure) as error:
+        backend(account).prepare()
     assert error.value.error == "invalid_vault"
     account["transport"].send.assert_not_called()
 
@@ -265,14 +269,16 @@ async def test_managed_sms_flow_creates_paths_only_and_loads_entities(hass, acco
         success(account), metadata]
     sms = backend(account)
     with patch("custom_components.im_motors.config_flow.HaSmsLogin", wraps=HaSmsLogin) as constructor, \
-         patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]):
+         patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]), \
+         patch("custom_components.im_motors.config_flow.managed_paths", return_value={
+             "data_dir": str(account["data"]), "key_file": str(account["key"])}):
         constructor.return_value = sms
         menu = await hass.config_entries.flow.async_init("im_motors", context={"source": "user"})
         assert menu["type"] == "menu"
         form = await hass.config_entries.flow.async_configure(menu["flow_id"], {"next_step_id": "sms"})
         assert form["step_id"] == "sms"
-        form = await hass.config_entries.flow.async_configure(form["flow_id"], {
-            "phone": PHONE, "data_dir": str(account["data"]), "key_file": str(account["key"])})
+        assert {str(key) for key in form["data_schema"].schema} == {"phone"}
+        form = await hass.config_entries.flow.async_configure(form["flow_id"], {"phone": PHONE})
         assert form["step_id"] == "sms_code"
         bad = await hass.config_entries.flow.async_configure(form["flow_id"], {"code": "abc", "resend_code": False})
         assert bad["errors"] == {"code": "invalid_code"}
@@ -319,7 +325,8 @@ async def test_duplicate_sms_identity_aborts_before_sending(hass, account):
         await hass.config_entries.async_add(entry)
     menu = await hass.config_entries.flow.async_init("im_motors", context={"source": "user"})
     form = await hass.config_entries.flow.async_configure(menu["flow_id"], {"next_step_id": "sms"})
-    result = await hass.config_entries.flow.async_configure(form["flow_id"], dict(entry.data, phone=PHONE))
+    with patch("custom_components.im_motors.config_flow.managed_paths", return_value=dict(entry.data)):
+        result = await hass.config_entries.flow.async_configure(form["flow_id"], {"phone": PHONE})
     assert result["reason"] == "already_configured"
     account["transport"].send.assert_not_called()
 

@@ -1,7 +1,7 @@
 """UI-driven SMS authentication with protected, durable request state.
 
 No phone or code is stored in HA entries. Uncertain requests never replay.
-Existing production configuration and its external key are required.
+Uses bundled protocol parameters or an existing protected protocol override.
 """
 import hashlib
 from pathlib import Path

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+
+- Bundle common protocol parameters separately from personal account storage.
+- Simplify SMS setup to phone number and verification code, without manual protocol files or key mounts.
+- Generate a random local 256-bit account encryption key per HA instance and keep it under the HA configuration directory.
+- Persist device identity and encrypted sessions in account directories derived using a keyed phone hash; keep phones and codes out of HA entries.
+- Authenticate the local storage marker before reuse; missing or changed keys stop setup instead of silently creating a different account.
+- Preserve v0.1/v0.2 encrypted sessions, external keys, custom protocol overrides and existing entity identities.
+- Correct the version reported by diagnostics and extend release auditing to permit only the approved common protocol file while still rejecting personal secrets.
+
+Common protocol parameters are public. Personal encryption keys and account sessions are generated locally and never included in releases. Image/risk verification and real vehicle telemetry remain pending.
+
 ## 0.2.0
 
 - Add mainland China phone input, SMS send and verification-code login in the HA configuration UI.

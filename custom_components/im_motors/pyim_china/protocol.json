@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "kind": "production-config",
+  "app_secret_b64": "UlBiRG03MDdjZEFwNDE0ag==",
+  "encrypt_key": "UhDaA6UfGyq932xn",
+  "base_url": "https://mh.immotors.com"
+}

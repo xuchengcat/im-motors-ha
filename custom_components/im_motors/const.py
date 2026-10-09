@@ -1,5 +1,6 @@
 """Constants for the read-only integration."""
 DOMAIN = "im_motors"
+INTEGRATION_VERSION = "0.3.0"
 CONF_DATA_DIR = "data_dir"
 CONF_KEY_FILE = "key_file"
 CONF_RESUME = "resume_requests"

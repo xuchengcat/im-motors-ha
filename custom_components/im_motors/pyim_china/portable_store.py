@@ -41,8 +41,28 @@ def create_key_file(path):
             stream.write(get_random_bytes(32))
             stream.flush()
             os.fsync(stream.fileno())
+        if os.name == "posix":
+            descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
     except OSError:
         raise VaultError("Unable to create a new secret key file") from None
+
+
+def load_key_file(path):
+    """Read a private local 256-bit key; never create or replace it."""
+    try:
+        path = Path(path)
+        _private_file(path)
+        with path.open("rb") as stream:
+            key = stream.read(33)
+        if len(key) != 32:
+            raise VaultError("Expected a 32-byte secret key file")
+        return key
+    except OSError:
+        raise VaultError("Unable to read secret key file") from None
 
 
 class PortableCredentialVault(CredentialVault):
@@ -56,15 +76,7 @@ class PortableCredentialVault(CredentialVault):
         return "PortableCredentialVault(<redacted>)"
 
     def _key(self):
-        try:
-            _private_file(self.key_file)
-            with self.key_file.open("rb") as stream:
-                key = stream.read(33)
-            if len(key) != 32:
-                raise VaultError("Expected a 32-byte secret key file")
-            return key
-        except OSError:
-            raise VaultError("Unable to read secret key file") from None
+        return load_key_file(self.key_file)
 
     def _load_payload(self):
         try:
