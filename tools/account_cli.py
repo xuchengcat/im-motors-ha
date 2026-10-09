@@ -9,6 +9,7 @@ from custom_components.im_motors.pyim_china import AccountClient, ClientFailure
 from custom_components.im_motors.pyim_china.credential_store import key_context
 from custom_components.im_motors.pyim_china.local_production_config import load_local_production_config
 from custom_components.im_motors.pyim_china.runtime_lock import AccountFileLock
+from custom_components.im_motors.pyim_china.ha_sms_login import HaSmsLogin
 from custom_components.im_motors.pyim_china.standalone_refresh_probe import recover_refresh
 
 
@@ -18,6 +19,7 @@ def main():
     parser.add_argument("--key-file", type=Path, required=True)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("check")
+    commands.add_parser("recover-login")
     recovery = commands.add_parser("recover-refresh")
     recovery.add_argument("--result", type=Path, required=True)
     args = parser.parse_args()
@@ -25,6 +27,9 @@ def main():
         if args.command == "check":
             AccountClient(args.data_dir, args.key_file).validate()
             print("Protected session and configuration valid. No HTTP request made.")
+        elif args.command == "recover-login":
+            HaSmsLogin(args.data_dir, args.key_file).recover()
+            print("Offline login recovery finished. No HTTP request made.")
         else:
             with key_context(args.key_file), AccountFileLock(args.data_dir):
                 config = load_local_production_config(args.data_dir / "production.imvault")

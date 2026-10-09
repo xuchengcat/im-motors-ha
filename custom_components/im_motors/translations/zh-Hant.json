@@ -3,30 +3,80 @@
   "config": {
     "step": {
       "user": {
-        "title": "导入持久化账号",
-        "description": "先按 README 挂载已登录的三个 .imvault 文件和外置密钥。路径为 HA 容器内的绝对路径。此步骤仅离线检查；完成后查询账号关联车辆元数据。车况数据仍待定。",
-        "data": {"data_dir": "加密数据目录", "key_file": "外置密钥文件"}
+        "title": "配置智己账号",
+        "menu_options": {
+          "sms": "手机号与短信登录",
+          "import": "导入已有加密会话"
+        }
       },
       "reauth_confirm": {
-        "title": "重新导入账号会话",
-        "description": "先通过独立 SDK 手动登录，并把同一客户端身份的新会话放入挂载目录；待恢复的刷新结果应先离线处理。提交后恢复请求。",
-        "data": {"data_dir": "加密数据目录", "key_file": "外置密钥文件"}
+        "title": "重新认证",
+        "menu_options": {
+          "sms": "手机号与短信登录",
+          "import": "导入已有加密会话"
+        }
       },
       "reconfigure": {
+        "title": "更新智己账号配置",
+        "menu_options": {
+          "sms": "手机号与短信登录",
+          "paths": "更新路径或恢复请求"
+        }
+      },
+      "import": {
+        "title": "导入已有加密会话",
+        "description": "先挂载同一客户端身份的 session、device、production 三个 .imvault 文件及匹配密钥。此步骤离线检查，完成后读取关联车辆元数据。未解决的登录或刷新请求需先排查。",
+        "data": {
+          "data_dir": "加密数据目录",
+          "key_file": "外置密钥文件"
+        }
+      },
+      "sms": {
+        "title": "手机号与短信登录",
+        "description": "输入中国大陆手机号。先按安装说明挂载 production.imvault 和匹配的外置密钥，数据目录需可写。提交将发送一条短信；已有有效验证码流程会继续使用。手机号不会保存到 HA 配置。",
+        "data": {
+          "data_dir": "加密数据目录",
+          "key_file": "外置密钥文件",
+          "phone": "手机号"
+        }
+      },
+      "sms_code": {
+        "title": "输入短信验证码",
+        "description": "输入收到的验证码并提交。需要新验证码时勾选重发，验证码可留空；重发间隔至少 60 秒。本地验证码流程 10 分钟后过期，服务端可能更早过期。",
+        "data": {
+          "code": "短信验证码",
+          "resend_code": "重新发送验证码"
+        }
+      },
+      "paths": {
         "title": "更新路径或恢复请求",
         "description": "失败后会停止云端请求。完成本地排查或离线恢复后，勾选恢复请求。未解决的刷新尝试会继续阻止恢复。",
-        "data": {"data_dir": "加密数据目录", "key_file": "外置密钥文件", "resume_requests": "已完成排查，恢复账号请求"}
+        "data": {
+          "data_dir": "加密数据目录",
+          "key_file": "外置密钥文件",
+          "resume_requests": "已完成排查，恢复账号请求"
+        }
       }
     },
     "error": {
       "invalid_vault": "无法读取加密配置，请检查容器路径、密钥、UID/权限、客户端身份及待恢复刷新。",
-      "login_required": "会话已过期或刷新时间不完整，请手动登录后重新导入。"
+      "login_required": "会话已过期或刷新时间不完整，请选择短信登录重新认证，或导入有效会话。",
+      "invalid_phone": "请输入 11 位中国大陆手机号，不包含 +86、空格或其他字符。",
+      "invalid_code": "请输入 4 至 8 位数字验证码。",
+      "sms_cooldown": "距离上次短信请求不足 60 秒，请稍后再提交。",
+      "sms_rejected": "服务端拒绝发送短信，请检查账号并稍后重试。",
+      "login_rejected": "服务端拒绝登录，请检查验证码；需要新验证码时勾选重发。",
+      "code_expired": "本地验证码流程已过期，请勾选重发获取新验证码。"
     },
     "abort": {
       "already_configured": "此客户端身份已配置。",
       "wrong_account": "客户端身份不同，请添加新的集成。",
-      "reauth_successful": "会话已重新导入。",
-      "reconfigure_successful": "配置已更新。"
+      "reauth_successful": "账号已重新认证。",
+      "reconfigure_successful": "配置已更新。",
+      "captcha_required": "服务端要求图形或风控验证，当前 HA 界面暂不支持，请通过官方渠道完成验证后重试。",
+      "account_binding_required": "服务端要求账号绑定，请先在官方应用完成。",
+      "unresolved_request": "请求结果不明或已有未解决的登录/刷新请求。已停止重发，请先检查保留的加密状态；不要删除 pending 文件绕过检查。",
+      "login_response_invalid": "登录响应已加密保留，但无法提交有效会话。请排查并使用 recover-login 离线恢复；不会自动再次提交验证码。"
     }
   }
 }

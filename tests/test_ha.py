@@ -120,13 +120,15 @@ async def test_reconfigure_resume_and_same_identity(hass, account):
 async def test_managed_config_flow_and_duplicate_identity(hass, account):
     with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]):
         form = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
-        assert form["type"] == "form"
+        assert form["type"] == "menu"
+        form = await hass.config_entries.flow.async_configure(form["flow_id"], {"next_step_id": "import"})
         result = await hass.config_entries.flow.async_configure(form["flow_id"],
             {"data_dir": str(account["data"]), "key_file": str(account["key"])})
         await hass.async_block_till_done()
     assert result["type"] == "create_entry"
     assert result["result"].state is ConfigEntryState.LOADED
     form = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+    form = await hass.config_entries.flow.async_configure(form["flow_id"], {"next_step_id": "import"})
     result = await hass.config_entries.flow.async_configure(form["flow_id"],
         {"data_dir": str(account["data"]), "key_file": str(account["key"])})
     assert result["type"] == "abort"

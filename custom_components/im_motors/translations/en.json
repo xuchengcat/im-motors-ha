@@ -3,30 +3,80 @@
   "config": {
     "step": {
       "user": {
-        "title": "Import persistent account",
-        "description": "Mount the three authenticated .imvault files and the external key as described in README. Use absolute paths inside the HA container. This step checks local files only. After setup, account vehicle metadata is queried. Telemetry remains pending.",
-        "data": {"data_dir": "Encrypted data directory", "key_file": "External key file"}
+        "title": "Set up IM Motors",
+        "menu_options": {
+          "sms": "Phone and SMS login",
+          "import": "Import an encrypted session"
+        }
       },
       "reauth_confirm": {
-        "title": "Import renewed account session",
-        "description": "Log in manually using the standalone SDK and mount a renewed session for the same client identity. Recover unresolved refresh responses offline first. Submitting resumes account requests.",
-        "data": {"data_dir": "Encrypted data directory", "key_file": "External key file"}
+        "title": "Reauthenticate",
+        "menu_options": {
+          "sms": "Phone and SMS login",
+          "import": "Import an encrypted session"
+        }
       },
       "reconfigure": {
+        "title": "Update IM Motors setup",
+        "menu_options": {
+          "sms": "Phone and SMS login",
+          "paths": "Update paths or resume requests"
+        }
+      },
+      "import": {
+        "title": "Import an encrypted session",
+        "description": "Mount session, device and production .imvault files and their matching key for the same client. This step checks files offline. Vehicle metadata is queried after setup. Resolve pending login or refresh requests first.",
+        "data": {
+          "data_dir": "Encrypted data directory",
+          "key_file": "External key file"
+        }
+      },
+      "sms": {
+        "title": "Phone and SMS login",
+        "description": "Enter a mainland China mobile number. First mount production.imvault and its matching external key as described in the installation guide. The data directory must be writable. Submitting sends an SMS, or resumes a valid pending challenge. HA configuration does not store the phone number.",
+        "data": {
+          "data_dir": "Encrypted data directory",
+          "key_file": "External key file",
+          "phone": "Mobile number"
+        }
+      },
+      "sms_code": {
+        "title": "Enter SMS verification code",
+        "description": "Enter the code from your SMS and submit. To request another SMS, select resend and leave the code empty. Wait at least 60 seconds between sends. This flow expires after 10 minutes; the server may expire the code sooner.",
+        "data": {
+          "code": "SMS code",
+          "resend_code": "Resend SMS code"
+        }
+      },
+      "paths": {
         "title": "Update paths or resume requests",
         "description": "Cloud requests stop after a failure. After offline review or recovery, select resume. Unresolved refresh attempts continue to block requests.",
-        "data": {"data_dir": "Encrypted data directory", "key_file": "External key file", "resume_requests": "Review completed; resume account requests"}
+        "data": {
+          "data_dir": "Encrypted data directory",
+          "key_file": "External key file",
+          "resume_requests": "Review completed; resume account requests"
+        }
       }
     },
     "error": {
       "invalid_vault": "Unable to read protected configuration. Check paths, key, UID, permissions, client identity and pending refresh state.",
-      "login_required": "The session is expired or refresh metadata is incomplete. Log in manually and import the session."
+      "login_required": "Session expired or refresh metadata incomplete. Reauthenticate by SMS or import a valid session.",
+      "invalid_phone": "Enter an 11-digit mainland China mobile number without +86, spaces or other characters.",
+      "invalid_code": "Enter a verification code of 4 to 8 digits.",
+      "sms_cooldown": "Wait at least 60 seconds after the last SMS request before submitting again.",
+      "sms_rejected": "The server rejected the SMS request. Check your account and try again later.",
+      "login_rejected": "The server rejected login. Check your code, or select resend to request a new code.",
+      "code_expired": "The local verification flow expired. Select resend to request a new code."
     },
     "abort": {
       "already_configured": "This client identity is already configured.",
       "wrong_account": "Client identity differs. Add a new integration.",
-      "reauth_successful": "The account session was imported again.",
-      "reconfigure_successful": "Configuration updated."
+      "reauth_successful": "Account reauthenticated.",
+      "reconfigure_successful": "Configuration updated.",
+      "captcha_required": "The server requires image or risk verification, which this HA flow does not support. Complete verification through official channels before trying again.",
+      "account_binding_required": "The server requires account binding. Complete it in the official app first.",
+      "unresolved_request": "A request outcome is unknown, or a login/refresh request is unresolved. Requests stopped. Review retained encrypted state before continuing; do not delete pending files to bypass checks.",
+      "login_response_invalid": "The login response was retained encrypted but could not be committed as a valid session. Review it and use recover-login offline. The code will not be submitted automatically again."
     }
   }
 }

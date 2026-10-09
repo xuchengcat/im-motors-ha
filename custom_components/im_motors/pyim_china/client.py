@@ -69,6 +69,14 @@ class AccountClient:
         return vault_for_path(self.data_dir / filename)
 
     def _validate(self):
+        login = self._vault("ha-login.imvault")
+        if login.path.exists():
+            from .ha_sms_login import LOGIN_BLOCKING_STATUSES
+            state = login._load_payload()
+            if state.get("kind") != "ha-sms-login" or state.get("schema_version") != 1:
+                raise ClientFailure("Invalid retained SMS authentication state")
+            if state.get("status") in LOGIN_BLOCKING_STATUSES:
+                raise ClientFailure("SMS authentication is pending; finish or review the login attempt")
         session, credentials = load_session(self.data_dir / "session.imvault")
         device = self._vault("device.imvault")._load_payload()
         if (device.get("kind") != "sms-device" or device.get("schema_version") != 1 or

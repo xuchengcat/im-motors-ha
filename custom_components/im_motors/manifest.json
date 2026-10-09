@@ -1,12 +1,16 @@
 {
   "domain": "im_motors",
   "name": "智己汽车（只读）",
-  "codeowners": ["@xuchengcat"],
+  "codeowners": [
+    "@xuchengcat"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/xuchengcat/im-motors-ha",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/xuchengcat/im-motors-ha/issues",
-  "requirements": ["pycryptodome==3.24.0"],
-  "version": "0.1.0"
+  "requirements": [
+    "pycryptodome==3.24.0"
+  ],
+  "version": "0.2.0"
 }
