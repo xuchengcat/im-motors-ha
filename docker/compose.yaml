@@ -1,0 +1,15 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:${HA_VERSION:-2026.2.3}
+    container_name: im-motors-homeassistant
+    user: "${IM_UID:-1000}:${IM_GID:-1000}"
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "8123:8123"
+    volumes:
+      - "${HA_CONFIG_DIR:?Set HA_CONFIG_DIR}:/config"
+      - "../custom_components/im_motors:/config/custom_components/im_motors:ro"
+      - "${IM_DATA_DIR:?Set IM_DATA_DIR}:/config/im_motors/data"
+      - "${IM_KEY_FILE:?Set IM_KEY_FILE}:/run/secrets/im_vault_key:ro"

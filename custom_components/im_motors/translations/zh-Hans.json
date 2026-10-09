@@ -1,0 +1,32 @@
+{
+  "title": "智己汽车（只读）",
+  "config": {
+    "step": {
+      "user": {
+        "title": "导入持久化账号",
+        "description": "先按 README 挂载已登录的三个 .imvault 文件和外置密钥。路径为 HA 容器内的绝对路径。此步骤仅离线检查；完成后查询账号关联车辆元数据。车况数据仍待定。",
+        "data": {"data_dir": "加密数据目录", "key_file": "外置密钥文件"}
+      },
+      "reauth_confirm": {
+        "title": "重新导入账号会话",
+        "description": "先通过独立 SDK 手动登录，并把同一客户端身份的新会话放入挂载目录；待恢复的刷新结果应先离线处理。提交后恢复请求。",
+        "data": {"data_dir": "加密数据目录", "key_file": "外置密钥文件"}
+      },
+      "reconfigure": {
+        "title": "更新路径或恢复请求",
+        "description": "失败后会停止云端请求。完成本地排查或离线恢复后，勾选恢复请求。未解决的刷新尝试会继续阻止恢复。",
+        "data": {"data_dir": "加密数据目录", "key_file": "外置密钥文件", "resume_requests": "已完成排查，恢复账号请求"}
+      }
+    },
+    "error": {
+      "invalid_vault": "无法读取加密配置，请检查容器路径、密钥、UID/权限、客户端身份及待恢复刷新。",
+      "login_required": "会话已过期或刷新时间不完整，请手动登录后重新导入。"
+    },
+    "abort": {
+      "already_configured": "此客户端身份已配置。",
+      "wrong_account": "客户端身份不同，请添加新的集成。",
+      "reauth_successful": "会话已重新导入。",
+      "reconfigure_successful": "配置已更新。"
+    }
+  }
+}

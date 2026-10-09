@@ -1,0 +1,32 @@
+{
+  "title": "IM Motors (read only)",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Import persistent account",
+        "description": "Mount the three authenticated .imvault files and the external key as described in README. Use absolute paths inside the HA container. This step checks local files only. After setup, account vehicle metadata is queried. Telemetry remains pending.",
+        "data": {"data_dir": "Encrypted data directory", "key_file": "External key file"}
+      },
+      "reauth_confirm": {
+        "title": "Import renewed account session",
+        "description": "Log in manually using the standalone SDK and mount a renewed session for the same client identity. Recover unresolved refresh responses offline first. Submitting resumes account requests.",
+        "data": {"data_dir": "Encrypted data directory", "key_file": "External key file"}
+      },
+      "reconfigure": {
+        "title": "Update paths or resume requests",
+        "description": "Cloud requests stop after a failure. After offline review or recovery, select resume. Unresolved refresh attempts continue to block requests.",
+        "data": {"data_dir": "Encrypted data directory", "key_file": "External key file", "resume_requests": "Review completed; resume account requests"}
+      }
+    },
+    "error": {
+      "invalid_vault": "Unable to read protected configuration. Check paths, key, UID, permissions, client identity and pending refresh state.",
+      "login_required": "The session is expired or refresh metadata is incomplete. Log in manually and import the session."
+    },
+    "abort": {
+      "already_configured": "This client identity is already configured.",
+      "wrong_account": "Client identity differs. Add a new integration.",
+      "reauth_successful": "The account session was imported again.",
+      "reconfigure_successful": "Configuration updated."
+    }
+  }
+}
