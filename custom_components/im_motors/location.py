@@ -1,8 +1,8 @@
 """Validate cached vehicle coordinates and convert the observed GCJ-02 format.
 
 App 3.2.4 passes period coordinates directly to AMap's autonavi reverse geocoder.
-Only the observed coOdntSysFmt=1 is supported; its GCJ-02 interpretation is based
-on that call chain, not an independently documented manufacturer enum.
+The App call chain does not branch on coOdntSysFmt. Both observed codes 0 and 1
+use that GCJ-02 interpretation; this is not a documented manufacturer enum.
 """
 import math
 import re
@@ -35,9 +35,16 @@ def location_status(snapshot):
             not -180 <= lon <= 180 or lat == 0 or lon == 0):
         return "invalid"
     code = values[2].value
-    if type(code) is not int or code != 1:
+    if type(code) is not int or code not in (0, 1):
         return "unsupported_coordinate_system"
     return "available"
+
+
+def coordinate_format(snapshot):
+    """Expose only a bounded integer format code, never coordinate values."""
+    field = snapshot.location_fields.get("coOdntSysFmt") if snapshot else None
+    value = field.value if field else None
+    return value if type(value) is int and 0 <= value <= 255 else None
 
 
 def coordinates(snapshot):

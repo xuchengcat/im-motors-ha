@@ -4,7 +4,7 @@ from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.core import callback
 
 from .entity import ImMotorsEntity
-from .location import coordinates, location_status
+from .location import coordinates, coordinate_format, location_status
 from .telemetry import raw, timestamp
 
 PARALLEL_UPDATES = 0
@@ -63,9 +63,10 @@ class ImMotorsTracker(ImMotorsEntity, TrackerEntity):
         retrieved = timestamp(self.coordinator.data.telemetry_time_ms)
         return {"location_status": location_status(self.snapshot),
                 "source_field": "period.latitude / period.longitude",
-                "source_coordinate_system": "GCJ-02",
+                "source_coordinate_format": coordinate_format(self.snapshot),
+                "source_coordinate_system": "GCJ-02" if coordinate_format(self.snapshot) in (0, 1) else "unknown",
                 "coordinate_system": "WGS-84",
-                "coordinate_system_basis": "app_3.2.4_autonavi_call_chain_observed_format_1",
+                "coordinate_system_basis": "app_3.2.4_autonavi_call_chain_observed_formats_0_1",
                 "cloud_updated": updated.isoformat() if updated else None,
                 "retrieved_at": retrieved.isoformat() if retrieved else None,
                 "individual_sample_time_verified": False}

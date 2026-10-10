@@ -1,11 +1,14 @@
 """Diagnostics are allowlisted counts and booleans, never config/response data."""
 from .const import INTEGRATION_VERSION, DEFAULT_TELEMETRY_INTERVAL
-from .location import coordinates
+from collections import Counter
+
+from .location import coordinates, coordinate_format, location_status
 
 
 async def async_get_config_entry_diagnostics(hass, entry):
     coordinator = getattr(entry, "runtime_data", None)
     snapshot = coordinator.data if coordinator else None
+    locations = tuple(snapshot.telemetry.values()) if snapshot else ()
     return {"integration_version": INTEGRATION_VERSION, "vehicle_telemetry_enabled": True,
             "last_update_success": bool(coordinator and coordinator.last_update_success),
             "associated_vehicle_count": len(snapshot.vehicles) if snapshot else 0,
@@ -15,4 +18,8 @@ async def async_get_config_entry_diagnostics(hass, entry):
             "individual_sample_time_verified": False,
             "vehicle_location_enabled": True,
             "vehicles_with_location": sum(coordinates(v) is not None for v in snapshot.telemetry.values()) if snapshot else 0,
+            "location_status_counts": dict(Counter(location_status(v) for v in locations)),
+            "location_format_counts": dict(Counter(
+                str(coordinate_format(v)) if coordinate_format(v) is not None else "unknown"
+                for v in locations)),
             "pending_fields": ["chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"]}

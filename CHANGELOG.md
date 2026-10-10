@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.5
+
+- Fix valid location becoming unavailable when the cloud changes the observed coordinate format code from 1 to 0. The App 3.2.4 direct autonavi path does not branch on this field; support observed codes 0/1 with the same GCJ-02 interpretation, without claiming a complete manufacturer enum.
+- Add safe format and location-status counts to diagnostics, so unsupported formats and invalid/missing coordinates can be distinguished even when HA removes unavailable tracker attributes.
+- Add regression coverage for a live entity switching from format 1 to 0, decimal string precision and malformed format codes; keep coordinates out of diagnostics.
+
 ## 0.4.4
 
 - Add an enabled-by-default total mileage sensor from `period.vehOdo`, mapped directly to integer km after corroboration with the owner’s LS6 instrument cluster. Other models still require verification.

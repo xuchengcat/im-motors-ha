@@ -1,6 +1,6 @@
 """Constants for the read-only integration."""
 DOMAIN = "im_motors"
-INTEGRATION_VERSION = "0.4.4"
+INTEGRATION_VERSION = "0.4.5"
 CONF_TELEMETRY_INTERVAL = "telemetry_interval_minutes"
 DEFAULT_TELEMETRY_INTERVAL = 60
 MIN_TELEMETRY_INTERVAL = 5
