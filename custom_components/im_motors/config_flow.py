@@ -3,8 +3,8 @@ from functools import partial
 from pathlib import Path
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigFlow, OptionsFlow
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 
 from .const import (DOMAIN, CONF_DATA_DIR, CONF_KEY_FILE, CONF_RESUME,
@@ -27,6 +27,16 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
     _sms = None
     _paths = None
 
+    def _sync_interval_option(self, entry, data):
+        if CONF_TELEMETRY_INTERVAL in entry.options:
+            self.hass.config_entries.async_update_entry(entry, options={**entry.options,
+                CONF_TELEMETRY_INTERVAL: data[CONF_TELEMETRY_INTERVAL]})
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return ImMotorsOptionsFlow()
+
     def _login_entry(self):
         if self.source == "reauth":
             return self._get_reauth_entry()
@@ -45,13 +55,13 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def _interval_schema(self):
         entry = self._login_entry()
-        default = entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL) if entry else DEFAULT_TELEMETRY_INTERVAL
+        default = entry.options.get(CONF_TELEMETRY_INTERVAL, entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL)) if entry else DEFAULT_TELEMETRY_INTERVAL
         return {vol.Required(CONF_TELEMETRY_INTERVAL, default=default):
                 vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL))}
 
     def _interval(self, data):
         entry = self._login_entry()
-        default = entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL) if entry else DEFAULT_TELEMETRY_INTERVAL
+        default = entry.options.get(CONF_TELEMETRY_INTERVAL, entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL)) if entry else DEFAULT_TELEMETRY_INTERVAL
         value = data.get(CONF_TELEMETRY_INTERVAL, default)
         if type(value) is not int or value < MIN_TELEMETRY_INTERVAL:
             raise vol.Invalid("Invalid vehicle polling interval")
@@ -82,6 +92,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_vault"
             else:
                 if self.source == "reauth":
+                    self._sync_interval_option(entry, user_input)
                     return self.async_update_reload_and_abort(entry, data_updates=user_input)
                 await self.async_set_unique_id(identity)
                 self._abort_if_unique_id_configured()
@@ -162,6 +173,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         data = self._paths
         entry = self._login_entry()
         if entry:
+            self._sync_interval_option(entry, data)
             return self.async_update_reload_and_abort(entry, data_updates=data)
         return self.async_create_entry(title="智己汽车（只读）", data=data)
 
@@ -199,5 +211,45 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
             except ClientFailure:
                 errors["base"] = "invalid_vault"
             else:
+                self._sync_interval_option(entry, data)
                 return self.async_update_reload_and_abort(entry, data_updates=data)
         return self.async_show_form(step_id="paths", data_schema=schema, errors=errors)
+
+
+class ImMotorsOptionsFlow(OptionsFlow):
+    async def async_step_init(self, user_input=None):
+        import re
+        from .trips import settings
+        entry = self.config_entry
+        client = AccountClient(entry.data[CONF_DATA_DIR], entry.data[CONF_KEY_FILE])
+        errors = {}
+        if user_input is not None:
+            key = user_input.get("amap_api_key", "").strip()
+            interval = user_input.get(CONF_TELEMETRY_INTERVAL,
+                entry.options.get(CONF_TELEMETRY_INTERVAL, entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL)))
+            if type(interval) is not int or interval < MIN_TELEMETRY_INTERVAL:
+                errors[CONF_TELEMETRY_INTERVAL] = "invalid_interval"
+            elif key and not re.fullmatch(r"[a-fA-F0-9]{32}", key):
+                errors["amap_api_key"] = "invalid_amap_key"
+            else:
+                try:
+                    saved = await self.hass.async_add_executor_job(settings, client)
+                    if key or user_input.get("clear_amap_key"):
+                        saved["amap_api_key"] = key if not user_input.get("clear_amap_key") else ""
+                        await self.hass.async_add_executor_job(settings, client, saved)
+                except Exception:
+                    errors["base"] = "invalid_storage"
+                else:
+                    return self.async_create_entry(title="", data={
+                        "trip_history_enabled": user_input["trip_history_enabled"],
+                        CONF_TELEMETRY_INTERVAL: interval,
+                        "amap_key_configured": bool(saved.get("amap_api_key")),
+                    })
+        schema = vol.Schema({
+            vol.Required("trip_history_enabled", default=entry.options.get("trip_history_enabled", False)): bool,
+            vol.Required(CONF_TELEMETRY_INTERVAL, default=entry.options.get(CONF_TELEMETRY_INTERVAL,
+                entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL))): vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL)),
+            vol.Optional("amap_api_key", default=""): selector.TextSelector(selector.TextSelectorConfig(type="password")),
+            vol.Required("clear_amap_key", default=False): bool,
+        })
+        return self.async_show_form(step_id="init", data_schema=schema, errors=errors)

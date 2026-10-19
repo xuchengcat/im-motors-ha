@@ -1,0 +1,60 @@
+import_trip_history:
+  name: 导入历史行程
+  description: 将手机整理后的 JSON/CSV 合并到本地历史库。不会登录智己车主账号。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+    vehicle_id:
+      required: true
+      description: 行程查询页面 WebSocket 返回的车辆哈希 ID。
+      selector:
+        text:
+    format:
+      default: json
+      selector:
+        select:
+          options:
+            - json
+            - csv
+    content:
+      required: true
+      selector:
+        text:
+          multiline: true
+query_trip_history:
+  name: 查询历史行程
+  description: 按日期查询本地档案，不请求智己或高德。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+    vehicle_id:
+      required: true
+      selector:
+        text:
+    start_date:
+      required: true
+      selector:
+        date:
+    end_date:
+      required: true
+      selector:
+        date:
+sync_trip_history:
+  name: 立即采样或补全地址
+  description: 使用现有账号立即查询车况并记录；也可仅补全已入库行程的高德地址。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+    geocode_only:
+      default: false
+      selector:
+        boolean:

@@ -9,6 +9,7 @@ async def async_get_config_entry_diagnostics(hass, entry):
     coordinator = getattr(entry, "runtime_data", None)
     snapshot = coordinator.data if coordinator else None
     locations = tuple(snapshot.telemetry.values()) if snapshot else ()
+    trips = getattr(coordinator, "trips", None)
     return {"integration_version": INTEGRATION_VERSION, "vehicle_telemetry_enabled": True,
             "last_update_success": bool(coordinator and coordinator.last_update_success),
             "associated_vehicle_count": len(snapshot.vehicles) if snapshot else 0,
@@ -22,4 +23,8 @@ async def async_get_config_entry_diagnostics(hass, entry):
             "location_format_counts": dict(Counter(
                 str(coordinate_format(v)) if coordinate_format(v) is not None else "unknown"
                 for v in locations)),
+            "local_trip_recording_enabled": bool(trips and trips.enabled),
+            "amap_key_configured": bool(trips and trips.key),
+            "trip_observation_counts": dict(Counter(
+                value.get("observation", "waiting") for value in trips.recording.values())) if trips else {},
             "pending_fields": ["chargedPower单位", "完整车锁枚举", "定位独立采样时间", "其他坐标格式"]}

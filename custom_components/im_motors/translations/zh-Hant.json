@@ -115,5 +115,24 @@
         }
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "本地行程记录与高德地址",
+        "description": "使用现有 HA 账号和车辆状态、总里程、位置自行记录未来行程，不需要车主账号，不影响手机登录。时间为采样观测值，里程来自整数公里总里程差；重复/过旧快照会跳过，漏采的短途标为推定区间。数据库长期保留，不受 HA 状态历史清理影响。高德请使用“Web服务”Key，加密保存在本机；留空保留原值。",
+        "data": {
+          "trip_history_enabled": "根据 HA 车况自行记录行程",
+          "amap_api_key": "高德 Web服务 API Key（留空保留原值）",
+          "clear_amap_key": "清除已保存的高德 Key",
+          "telemetry_interval_minutes": "车况查询间隔（分钟，最低5分钟）"
+        }
+      }
+    },
+    "error": {
+      "invalid_amap_key": "请输入32位十六进制高德 Web服务 Key。",
+      "invalid_storage": "无法保存加密配置，请检查账号存储目录与密钥。",
+      "invalid_interval": "请输入不少于5的整数分钟数。"
+    }
   }
 }

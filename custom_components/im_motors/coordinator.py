@@ -20,7 +20,8 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
         super().__init__(hass, LOGGER, config_entry=entry, name=DOMAIN,
                          update_interval=timedelta(seconds=60), always_update=False)
         self.client = client
-        self.telemetry_interval_minutes = entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL)
+        self.telemetry_interval_minutes = entry.options.get(CONF_TELEMETRY_INTERVAL,
+            entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL))
         self.client.set_telemetry_interval(self.telemetry_interval_minutes)
         self._request_lock = asyncio.Lock()
 
@@ -42,8 +43,11 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
 
     async def _async_fetch_data(self, *, force_telemetry=False):
         try:
-            return await self.hass.async_add_executor_job(partial(
+            snapshot = await self.hass.async_add_executor_job(partial(
                 self.client.update, include_telemetry=True, force_telemetry=force_telemetry))
+            if getattr(self, "trips", None):
+                await self.trips.observe(snapshot)
+            return snapshot
         except LoginRequired:
             raise ConfigEntryAuthFailed("Manual account login required") from None
         except ClientFailure:

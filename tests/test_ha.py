@@ -31,7 +31,7 @@ def telemetry_response(account):
     account["transport"].send.side_effect = send
 
 
-async def create_entry(hass, account):
+async def create_entry(hass, account, *, options=None):
     flow = ImMotorsConfigFlow()
     flow.hass = hass
     flow.context = {"source": "user"}
@@ -39,7 +39,7 @@ async def create_entry(hass, account):
     assert result["type"] == "create_entry"
     return config_entries.ConfigEntry(version=1, minor_version=1, domain=DOMAIN,
         title=result["title"], data=result["data"], source="user", unique_id=flow.unique_id,
-        discovery_keys={}, options={}, subentries_data=[])
+        discovery_keys={}, options=options or {}, subentries_data=[])
 
 
 async def test_flow_offline_and_invalid_paths(hass, account):

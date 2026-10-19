@@ -82,3 +82,9 @@ Protocol configuration and its external key remain required. Image/risk verifica
 - Include installation, data mapping, backup and recovery documentation.
 
 Live SOC, range, charging and other vehicle telemetry remain unverified and are not queried.
+# v0.5.0
+
+- 使用现有车况采样自行记录未来行程，不访问车主专用日历接口或更换账号。重复/过旧/缺少云端时间的快照跳过；记录采样边界、缺口、里程回退和漏采短途推定区间。
+- SQLite 长期保存样本、行程、按出发日汇总、地址缓存与重启续接状态，独立于 HA Recorder 保留期。
+- HA 配置页增加本地记录开关、高德 Web服务 Key 加密存储和查询间隔；侧边栏提供历史查询、进行中状态、日期筛选、JSON/CSV 导出和可选导入。
+- 无 Key 时保存坐标，高德失败保留行程；已查询地址缓存复用。查询只读本地数据库，手动采样复用原有 v6 查询和认证/故障停止机制。

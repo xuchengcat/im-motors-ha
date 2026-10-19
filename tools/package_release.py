@@ -13,7 +13,7 @@ def main():
     files = [ROOT / name for name in ("README.md", "hacs.json", "LICENSE", "CHANGELOG.md")]
     for directory in ("custom_components/im_motors", "docker"):
         files.extend(path for path in (ROOT / directory).rglob("*")
-                     if path.is_file() and path.suffix in (".py", ".json", ".yaml", ".example"))
+                     if path.is_file() and path.suffix in (".py", ".json", ".yaml", ".example", ".js"))
     files.extend([ROOT / "requirements-test.txt", ROOT / "pytest.ini"])
     files.extend((ROOT / "tests").glob("*.py"))
     files.extend(path for path in (ROOT / "tools").glob("*.py") if path.name != "vendor_runtime.py")
@@ -28,7 +28,7 @@ def main():
     runtime_archive = dist / "im_motors.zip"
     with zipfile.ZipFile(runtime_archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         for path in sorted(integration.rglob("*")):
-            if path.is_file() and path.suffix in (".py", ".json"):
+            if path.is_file() and path.suffix in (".py", ".json", ".js", ".yaml"):
                 bundle.write(path, path.relative_to(integration))
         bundle.write(ROOT / "LICENSE", "LICENSE")
     checksums = "".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n"

@@ -1,5 +1,7 @@
 # 智己汽车 Home Assistant 只读集成
 
+v0.5.0 新增 **HA 自行记录行程**：使用现有账号的车况、总里程和位置记录未来行程，保存到独立 SQLite 历史库，提供侧边栏日期查询、行程展示、导出与高德地址补全。配置页可启用记录、填写高德 Web服务 Key，并调整查询间隔。无需车主账号或手机调试，不影响手机登录。时间为采样观测值，漏采的短途标为推定区间；无法补回启用前的历史。见[历史行程说明](docs/trip-history.md)。
+
 [![Validation](https://github.com/xuchengcat/im-motors-ha/actions/workflows/validate.yaml/badge.svg)](https://github.com/xuchengcat/im-motors-ha/actions/workflows/validate.yaml)
 
 通过 Home Assistant 读取智己车辆电量、续航、总里程、胎压胎温、门窗、温度和充电信息，并管理账号认证会话。支持 HACS 自定义仓库安装，运行不依赖手机、ADB 或 Windows。

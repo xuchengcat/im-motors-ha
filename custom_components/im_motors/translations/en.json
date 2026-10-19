@@ -115,5 +115,24 @@
         }
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Local trip recorder and AMap",
+        "description": "Record future trips from existing HA vehicle status, odometer and location. Keeps your existing account and phone login; no owner login is required. Start/end times are sampled observations, mileage uses integer-km odometer differences. Cached/stale snapshots are skipped; missed short trips are labelled as inferred intervals. Records persist independently of Recorder. Optional AMap Web Service Key is encrypted locally; blank keeps the saved key.",
+        "data": {
+          "trip_history_enabled": "Record trips from HA vehicle telemetry",
+          "amap_api_key": "AMap Web Service API Key (blank keeps saved key)",
+          "clear_amap_key": "Delete saved AMap key",
+          "telemetry_interval_minutes": "Vehicle query interval (minutes, minimum 5)"
+        }
+      }
+    },
+    "error": {
+      "invalid_amap_key": "Enter a 32-character hexadecimal Web Service Key.",
+      "invalid_storage": "Could not save encrypted settings.",
+      "invalid_interval": "Enter a whole number of at least 5 minutes."
+    }
   }
 }
