@@ -63,7 +63,11 @@ class TripStore:
                 CREATE TABLE IF NOT EXISTS samples (
                     vehicle TEXT NOT NULL, source_time TEXT NOT NULL, payload TEXT NOT NULL,
                     PRIMARY KEY (vehicle, source_time));
-                PRAGMA user_version=1;
+                CREATE TABLE IF NOT EXISTS trip_revisions (
+                    vehicle TEXT NOT NULL, revision TEXT NOT NULL, kind TEXT NOT NULL,
+                    record_key TEXT NOT NULL, payload TEXT NOT NULL,
+                    PRIMARY KEY(vehicle, revision, kind, record_key));
+                PRAGMA user_version=2;
             """)
 
     def save_day(self, vehicle, result):

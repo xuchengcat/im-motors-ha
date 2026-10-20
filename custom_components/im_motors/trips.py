@@ -48,6 +48,8 @@ class TripManager:
         if self.status.get("state") == "running":
             await self.set_status(state="error", error="interrupted")
         for vehicle in self.coordinator.data.vehicles:
+            await self.hass.async_add_executor_job(self.recorder.rebuild_if_needed,
+                vehicle.identifier, self.coordinator.telemetry_interval_minutes)
             self.recording[vehicle.identifier] = await self.hass.async_add_executor_job(self.store.state, "recorder:" + vehicle.identifier)
         if self.enabled:
             await self.observe(self.coordinator.data)

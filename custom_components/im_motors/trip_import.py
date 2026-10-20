@@ -106,17 +106,23 @@ def parse_import(content, format="json"):
                 "start_address": text(row.get("start_address")), "end_address": text(row.get("end_address")),
                 "source": "ha_telemetry" if row.get("source") == "ha_telemetry" else "phone_import", "detail_loaded": True,
                 "source_present": row.get("source_present", True) is not False}
-            for field in ("sampling_gap", "partial_start", "odometer_reset", "individual_sample_times_verified"):
+            for field in ("sampling_gap", "partial_start", "odometer_reset", "individual_sample_times_verified",
+                          "start_parking_confirmed", "end_parking_confirmed", "parking_confirmation_gap", "location_progress_unverified"):
                 if field in row:
                     if type(row[field]) is not bool:
                         raise TripError("invalid_import")
                     trip[field] = row[field]
             for field in ("start_time_lower_bound", "start_time_upper_bound", "end_time_lower_bound", "end_time_upper_bound",
-                          "start_poi", "end_poi", "start_address_source", "end_address_source"):
+                          "start_poi", "end_poi", "start_address_source", "end_address_source", "parking_confirmed_at"):
                 if field in row:
                     trip[field] = text(row[field])
-            if row.get("detection") in ("observed_state_change", "odometer_interval"):
+            if row.get("detection") in ("observed_state_change", "odometer_interval", "stable_parking", "stable_parking_interval"):
                 trip["detection"] = row["detection"]
+            for field in ("algorithm_version", "parking_confirmation_samples", "parking_radius_m"):
+                if field in row:
+                    if type(row[field]) is not int or row[field] < 0:
+                        raise TripError("invalid_import")
+                    trip[field] = row[field]
             if row.get("source") == "ha_telemetry":
                 trip["odometer_resolution_km"] = 1
             for prefix in ("start", "end"):
