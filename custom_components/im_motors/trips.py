@@ -66,9 +66,10 @@ class TripManager:
                     self.recording[vehicle] = dict(self.recording.get(vehicle, {}), observation=reason)
                     continue
                 previous_id = self.recording.get(vehicle, {}).get("last_trip_id")
+                previous_endpoint = self.recording.get(vehicle, {}).get("endpoint_revision", 0)
                 result = await self.hass.async_add_executor_job(self.recorder.observe, vehicle, point, self.coordinator.telemetry_interval_minutes)
                 self.recording[vehicle] = result
-                if result.get("last_trip_id") != previous_id and self.key and not self.task:
+                if (result.get("last_trip_id") != previous_id or result.get("endpoint_revision", 0) != previous_endpoint) and self.key and not self.task:
                     self.start(geocode_only=True)
             except Exception:
                 self.recording[vehicle] = dict(self.recording.get(vehicle, {}), observation="recording_failed")

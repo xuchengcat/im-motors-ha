@@ -3,7 +3,7 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from custom_components.im_motors.trip_web import ws_entries, ws_query
+from custom_components.im_motors.trip_web import ws_entries, ws_query, ws_detail
 from test_ha import create_entry
 
 
@@ -36,4 +36,13 @@ async def test_non_admin_cannot_read_archive(hass):
     await hass.async_block_till_done(wait_background_tasks=True)
     conn.send_result.assert_not_called()
     # HA's wrapper routes Unauthorized to the connection error handler.
+    conn.async_handle_exception.assert_called_once()
+
+
+async def test_non_admin_cannot_read_route(hass):
+    conn = Mock(user=SimpleNamespace(is_admin=False))
+    ws_detail(hass, conn, {"id": 1, "type": "im_motors/trips/detail",
+        "entry_id": "entry", "vehicle_id": "vehicle", "trip_id": "trip"})
+    await hass.async_block_till_done(wait_background_tasks=True)
+    conn.send_result.assert_not_called()
     conn.async_handle_exception.assert_called_once()

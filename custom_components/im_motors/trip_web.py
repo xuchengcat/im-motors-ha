@@ -41,6 +41,7 @@ async def ws_entries(hass, connection, msg):
         result.append({"entry_id": entry.entry_id, "title": entry.title, "enabled": manager.enabled,
                        "amap_key_configured": bool(manager.key),
                        "source": "ha_telemetry", "interval_minutes": manager.coordinator.telemetry_interval_minutes,
+                       "trip_sample_seconds": manager.coordinator.telemetry_interval_minutes * 60,
                        "vehicles": [{"id": v.identifier, "name": v.name} for v in entry.runtime_data.data.vehicles]})
     connection.send_result(msg["id"], result)
 
@@ -72,12 +73,29 @@ async def ws_query(hass, connection, msg):
             "active_since": (active.get("start") or {}).get("time"),
             "parking_anchor_confirmed": bool(anchor),
             "parking_anchor_since": (anchor.get("first") or {}).get("time"),
-            "pending_parking_since": (candidate.get("first") or {}).get("time") if active else None}
+            "pending_parking_since": (candidate.get("first") or {}).get("time") if recording.get("pending_endpoint") else None}
         status["message"] = ERRORS.get(status.get("error"), "")
         status["address_message"] = ERRORS.get(status.get("address_error"), "")
         connection.send_result(msg["id"], {"days": days, "trips": trips, "stats": stats, "status": status})
     except TripError as error:
         connection.send_error(msg["id"], error.code, ERRORS.get(error.code, "行程查询不可用。"))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "im_motors/trips/detail",
+    vol.Required("entry_id"): str, vol.Required("vehicle_id"): str,
+    vol.Required("trip_id"): str})
+@websocket_api.async_response
+async def ws_detail(hass, connection, msg):
+    require_admin(connection)
+    try:
+        manager = manager_for(hass, msg["entry_id"])
+        if msg["vehicle_id"] not in {v.identifier for v in manager.coordinator.data.vehicles}:
+            raise TripError("vehicle_unavailable")
+        result = await hass.async_add_executor_job(manager.store.detail, msg["vehicle_id"], msg["trip_id"])
+        result["interval_minutes"] = manager.coordinator.telemetry_interval_minutes
+        connection.send_result(msg["id"], result)
+    except TripError as error:
+        connection.send_error(msg["id"], error.code, "该行程不可用，请刷新列表后重试。")
 
 
 @websocket_api.websocket_command({vol.Required("type"): "im_motors/trips/sync",
@@ -172,6 +190,7 @@ async def async_setup_web(hass):
         return
     websocket_api.async_register_command(hass, ws_entries)
     websocket_api.async_register_command(hass, ws_query)
+    websocket_api.async_register_command(hass, ws_detail)
     websocket_api.async_register_command(hass, ws_sync)
     websocket_api.async_register_command(hass, ws_import)
     await async_setup_services(hass)
@@ -183,5 +202,5 @@ async def async_setup_web(hass):
             "/im_motors/trips-panel.js", str(Path(__file__).with_name("frontend") / "trips-panel.js"), False)])
         await panel_custom.async_register_panel(hass, frontend_url_path="im-motors-trips",
             webcomponent_name="im-motors-trips-panel", sidebar_title="智己行程", sidebar_icon="mdi:calendar-clock",
-            module_url="/im_motors/trips-panel.js?v=0.5.1", require_admin=True)
+            module_url="/im_motors/trips-panel.js?v=0.6.2", require_admin=True)
     hass.data[key] = True

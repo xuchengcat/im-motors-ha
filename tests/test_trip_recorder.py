@@ -218,8 +218,8 @@ def test_rebuild_archives_old_rows_and_runs_only_once(recorder):
         db.execute("INSERT INTO trips VALUES (?,?,?,?,?,?)", ("v", "old-trip", "2026-10-19", json.dumps(old_trip), 1, samples[-1]["time"]))
         db.execute("INSERT INTO metadata VALUES (?,?)", ("recorder:v", json.dumps({"previous": samples[-1]})))
     assert recorder.rebuild_if_needed("v", 5)
-    assert trips(recorder)[0]["algorithm_version"] == 2
-    assert recorder.store.state("recorder:v")["parking_anchor"]
+    assert trips(recorder)[0]["algorithm_version"] == 4
+    assert recorder.store.state("recorder:v")["engine_mode"]
     assert not recorder.rebuild_if_needed("v", 5)
     with recorder.store.connection() as db:
         assert db.execute("SELECT count(*) FROM samples").fetchone()[0] == 4
@@ -234,7 +234,7 @@ def test_rebuild_does_not_erase_imported_or_uncovered_history(recorder):
     assert trips(recorder)[0]["trip_id"] == "imported"
 
 
-def test_rebuild_recounts_uncovered_trips_when_covered_trip_is_pending(recorder):
+def test_rebuild_recounts_uncovered_trips_and_completed_power_cycle(recorder):
     with recorder.store.connection() as db:
         for identity, first, last, mileage in [("uncovered", -20, -10, 2), ("covered", 0, 5, 8)]:
             trip = {"trip_id": identity, "source": "ha_telemetry", "date": "2026-10-19",
@@ -244,9 +244,9 @@ def test_rebuild_recounts_uncovered_trips_when_covered_trip_is_pending(recorder)
         for p in [point(0, "driving", 100), point(5, "parking", 108, position=5000)]:
             db.execute("INSERT INTO samples VALUES (?,?,?)", ("v", p["time"], json.dumps(p)))
     recorder.rebuild_if_needed("v", 5)
-    assert len(trips(recorder)) == 1
+    assert len(trips(recorder)) == 2
     day = recorder.store.days("v", "2026-10-19", "2026-10-19")[0]
-    assert day["total_count"] == 1 and day["distance_km"] == 2
+    assert day["total_count"] == 2 and day["distance_km"] == 10
 
 
 def test_snapshot_freshness_and_missing_times():
@@ -290,5 +290,5 @@ async def test_existing_queries_feed_archive_without_additional_cloud_calls(hass
     result = await hass.services.async_call("im_motors", "query_trip_history", {"entry_id": entry.entry_id,
         "vehicle_id": vehicle, "start_date": stats["first_day"], "end_date": stats["last_day"]}, blocking=True, return_response=True)
     assert result["trips"][0]["distance_km"] == 8
-    assert result["trips"][0]["start_parking_confirmed"]
+    assert result["trips"][0]["detection"] == "power_cycle"
     await hass.config_entries.async_unload(entry.entry_id)

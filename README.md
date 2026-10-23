@@ -1,6 +1,6 @@
 # 智己汽车 Home Assistant 只读集成
 
-v0.5.1 新增 **HA 自行记录行程**：根据连续稳定的停车定位判断起终点，结合现有账号的车况和总里程记录未来行程，保存到独立 SQLite 历史库，提供侧边栏日期查询、行程展示、导出与高德地址补全。配置页可启用记录、填写高德 Web服务 Key，并调整查询间隔。无需车主账号或手机调试，不影响手机登录。时间为采样观测值，漏采的短途标为推定区间；无法补回启用前的历史。见[历史行程说明](docs/trip-history.md)。
+v0.6.2 支持 **HA 自行记录行程与轨迹详情**：按车辆启动至熄火分段，同日可记录多段；起终点单独使用连续稳定的停车定位确认，证据不足时显示待确认。过程样本保存位置与时间，详情提供地图轨迹和逐点时间表。记录复用原车况查询间隔，不额外增加云端查询频率；支持高德地址补全、日期筛选与导出。见[行程与轨迹说明](docs/trip-power-and-route.md)。
 
 [![Validation](https://github.com/xuchengcat/im-motors-ha/actions/workflows/validate.yaml/badge.svg)](https://github.com/xuchengcat/im-motors-ha/actions/workflows/validate.yaml)
 

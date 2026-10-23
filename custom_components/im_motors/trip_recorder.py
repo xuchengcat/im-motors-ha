@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from .location import location_status
 from .telemetry import raw, normalized, SENSORS, timestamp
 
-ALGORITHM_VERSION = 2
+ALGORITHM_VERSION = 4
 PARKING_RADIUS_M = 50
 DEPARTURE_RADIUS_M = 100
 PARKING_SECONDS = 10 * 60
@@ -27,7 +27,10 @@ def sample(snapshot, received_at, interval_minutes):
     if location_status(snapshot) == "available":
         point = {"latitude": float(snapshot.location_fields["latitude"].value),
                  "longitude": float(snapshot.location_fields["longitude"].value), "source": "app_amap"}
+    ready = raw(snapshot, "powerTrain", "eptReadyStatus")
     return {"time": source.isoformat(), "received_at": received_at.isoformat(),
+            "powered": bool(ready) if type(ready) is int and ready in (0, 1) else None,
+            "power_source": "powerTrain.eptReadyStatus",
             "state": normalized(snapshot, SENSORS["driving_state"]),
             "odometer": normalized(snapshot, SENSORS["odometer"]), "coordinates": point}, "fresh"
 
@@ -102,6 +105,8 @@ class TripRecorder:
                 "interval": interval}
 
     def transition(self, state, point, interval_minutes):
+        if "powered" in point or state.get("engine_mode"):
+            return self._power_transition(state, point, interval_minutes)
         state = dict(state)
         previous, active = state.get("previous"), state.get("active")
         if previous and point["time"] <= previous["time"]:
@@ -169,6 +174,110 @@ class TripRecorder:
             state["last_trip_id"] = completed["trip_id"]
         return state, completed
 
+    def _power_transition(self, state, point, interval_minutes):
+        """Power cycles define trips; stable parking independently defines places."""
+        state = dict(state)
+        state.pop("endpoint_updates", None)
+        previous, active = state.get("previous"), state.get("active")
+        if previous and point["time"] <= previous["time"]:
+            return dict(state, observation="cached_or_out_of_order"), None
+        powered = point.get("powered")
+        gap = bool(previous and elapsed(previous, point) > max(interval_minutes * 3 * 60, 900))
+        anchor = state.get("parking_anchor")
+        pending = state.get("pending_endpoint")
+        candidate = state.get("parking_candidate")
+        events = []
+        if powered is True:
+            # A new cycle closes the prior cycle's endpoint confirmation window.
+            if pending:
+                events.append({"trip_id": pending["trip_id"], "anchor": None})
+            pending, candidate = None, None
+        else:
+            if anchor and (odo_changed(anchor["last"], point)
+                    or (distance_m(anchor["first"]["coordinates"], point.get("coordinates")) or 0) > PARKING_RADIUS_M):
+                anchor = None
+            candidate = self._candidate(candidate, point, active, gap)
+            if self._confirmed(candidate):
+                anchor = {"first": candidate["first"], "last": candidate["last"],
+                          "odometer": candidate["known_odometer"], "confirmed_at": point["time"],
+                          "sample_count": candidate["count"], "confirmation_gap": candidate["confirmation_gap"]}
+        completed = None
+        if active:
+            active = dict(active)
+            active["sample_count"] += 1
+            active["sampling_gap"] |= gap or powered is None or not point.get("coordinates")
+            last = active.get("last_odometer")
+            if last is not None and point["odometer"] is not None and point["odometer"] < last:
+                active["odometer_reset"] = True
+            if point["odometer"] is not None:
+                active["last_odometer"] = point["odometer"]
+            origin = active["baseline"].get("coordinates") or active.get("observed_start_coordinates")
+            displacement = distance_m(origin, point.get("coordinates")) or 0
+            active["max_displacement_m"] = max(active.get("max_displacement_m", 0), displacement)
+            if powered is False:
+                stop = {"first": point, "last": point, "count": 1,
+                        "gap_at_arrival": active["sampling_gap"], "confirmation_gap": False}
+                completed = self.finish(active, stop)
+                completed.update(detection="power_cycle", end_parking_confirmed=False,
+                                 power_off_observed=True, parking_confirmation_samples=0,
+                                 parking_confirmed_at=None,
+                                 start_time_lower_bound=active.get("start_lower_bound", active["start"]["time"]),
+                                 end_time_lower_bound=(previous or active["start"])["time"],
+                                 end_coordinates=None, end_location_status="awaiting_stable_parking",
+                                 start_location_status="confirmed" if active["start_parking_confirmed"] else "unconfirmed",
+                                 start_location_sample_time=active.get("start_location_sample_time"),
+                                 start_location_confirmed_at=active.get("start_location_confirmed_at"),
+                                 start_parking_confirmation_samples=active.get("start_parking_confirmation_samples", 0),
+                                 observed_start_coordinates=active.get("observed_start_coordinates"),
+                                 observed_end_coordinates=point.get("coordinates"))
+                pending = {"trip_id": completed["trip_id"], "odometer": point["odometer"],
+                           "origin": origin, "distance_km": completed["distance_km"],
+                           "location_progress_unverified": completed["location_progress_unverified"]}
+                active = None
+        elif powered is True:
+            # A preceding off sample bounds the start, but is not part of the drive.
+            complete_start = previous is not None and previous.get("powered") is False and not gap
+            baseline = dict(point)
+            if complete_start and previous.get("odometer") is not None:
+                baseline["odometer"] = previous["odometer"]
+            baseline["coordinates"] = anchor["first"]["coordinates"] if anchor else None
+            active = self._active(point, baseline, anchor, gap or not point.get("coordinates"))
+            active.update(partial_start=not complete_start, start_parking_confirmed=bool(anchor),
+                          observed_start_coordinates=point.get("coordinates"),
+                          start_location_sample_time=anchor["first"]["time"] if anchor else None,
+                          start_location_confirmed_at=anchor["confirmed_at"] if anchor else None,
+                          start_parking_confirmation_samples=anchor["sample_count"] if anchor else 0,
+                          start_lower_bound=previous["time"] if complete_start else point["time"])
+        if powered is True:
+            anchor = None
+        if pending:
+            # Mileage after the stop means another unobserved movement occurred;
+            # its later parking position must not be assigned to this old cycle.
+            moved = (pending["odometer"] is not None and point["odometer"] is not None
+                     and pending["odometer"] != point["odometer"])
+            frozen = (pending.get("location_progress_unverified") and anchor
+                      and (distance_m(pending.get("origin"), anchor["first"]["coordinates"]) or 0) <= DEPARTURE_RADIUS_M)
+            if frozen:
+                anchor = None
+            if moved:
+                events.append({"trip_id": pending["trip_id"], "anchor": None})
+                pending = None
+            elif anchor and not frozen:
+                events.append({"trip_id": pending["trip_id"], "anchor": anchor})
+                pending = None
+        observation = "recording" if active else "parked" if powered is False else "unknown_state"
+        if pending:
+            observation = "confirming_endpoint"
+        if active and powered is None:
+            observation = "unknown_state"
+        state.update(algorithm_version=ALGORITHM_VERSION, engine_mode=True,
+                     previous=point, active=active, observation=observation,
+                     parking_candidate=candidate, parking_anchor=anchor, departure=None,
+                     pending_endpoint=pending, endpoint_updates=events)
+        if completed:
+            state["last_trip_id"] = completed["trip_id"]
+        return state, completed
+
     def observe(self, vehicle, point, interval_minutes):
         with self.store.connection() as db:
             row = db.execute("SELECT payload FROM metadata WHERE key=?", ("recorder:" + vehicle,)).fetchone()
@@ -178,8 +287,27 @@ class TripRecorder:
             db.execute("INSERT OR IGNORE INTO samples VALUES (?,?,?)", (vehicle, point["time"], json.dumps(point)))
             if completed:
                 self._save_trip(db, vehicle, completed)
+            for event in state.pop("endpoint_updates", []):
+                row = db.execute("SELECT payload FROM trips WHERE vehicle=? AND trip_id=?", (vehicle, event["trip_id"])).fetchone()
+                if row:
+                    trip = self._endpoint(json.loads(row[0]), event["anchor"])
+                    db.execute("UPDATE trips SET payload=?,updated=? WHERE vehicle=? AND trip_id=?",
+                               (json.dumps(trip), datetime.now(timezone.utc).isoformat(), vehicle, event["trip_id"]))
+                    state["endpoint_revision"] = state.get("endpoint_revision", 0) + 1
             db.execute("INSERT OR REPLACE INTO metadata VALUES (?,?)", ("recorder:" + vehicle, json.dumps(state)))
             return state
+
+    @staticmethod
+    def _endpoint(trip, anchor):
+        trip.update(end_coordinates=anchor["first"]["coordinates"] if anchor else None,
+                    end_parking_confirmed=bool(anchor),
+                    end_location_status="confirmed" if anchor else "unconfirmed",
+                    end_location_sample_time=anchor["first"]["time"] if anchor else None,
+                    parking_confirmed_at=anchor["confirmed_at"] if anchor else None,
+                    parking_confirmation_samples=anchor["sample_count"] if anchor else 0,
+                    parking_confirmation_gap=anchor.get("confirmation_gap", False) if anchor else False,
+                    end_address=None, end_poi=None, end_address_source=None)
+        return trip
 
     def finish(self, active, candidate):
         start, baseline, end = active["start"], active["baseline"], candidate["first"]
@@ -216,11 +344,19 @@ class TripRecorder:
             rows = db.execute("SELECT payload FROM samples WHERE vehicle=? ORDER BY source_time", (vehicle,)).fetchall()
             state, completed = {}, []
             for row in rows:
-                state, trip = self.transition(state, json.loads(row[0]), interval_minutes)
+                point = json.loads(row[0])
+                if "powered" not in point:
+                    point["powered"] = {"ready": True, "driving": True, "parking": False}.get(point.get("state"))
+                    point["power_source"] = "retained_running_classification"
+                state, trip = self.transition(state, point, interval_minutes)
                 if trip:
                     completed.append(trip)
+                for event in state.pop("endpoint_updates", []):
+                    target = next((t for t in reversed(completed) if t["trip_id"] == event["trip_id"]), None)
+                    if target is not None:
+                        self._endpoint(target, event["anchor"])
             state["algorithm_version"] = ALGORITHM_VERSION
-            revision = "parking-v2-" + datetime.now(timezone.utc).isoformat()
+            revision = "power-parking-v4-" + datetime.now(timezone.utc).isoformat()
             originals, touched_days = {}, set()
             first_time = datetime.fromisoformat(json.loads(rows[0][0])["time"]) if rows else None
             last_time = datetime.fromisoformat(json.loads(rows[-1][0])["time"]) if rows else None

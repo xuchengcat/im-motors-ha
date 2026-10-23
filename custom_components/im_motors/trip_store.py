@@ -1,6 +1,6 @@
 """Private SQLite trip archive, independent of Recorder retention."""
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import calendar
 import json
 import os
@@ -134,9 +134,57 @@ class TripStore:
         return json.loads(row[0]) if row else None
 
     def update_trip(self, vehicle, trip):
-        payload = {k: v for k, v in trip.items() if k not in ("date", "source_present", "archived_at")}
+        """Merge geocoding without overwriting a concurrently confirmed endpoint."""
         with self.connection() as db:
+            row = db.execute("SELECT payload FROM trips WHERE vehicle=? AND trip_id=?", (vehicle, trip["trip_id"])).fetchone()
+            if row is None:
+                return
+            payload = json.loads(row[0])
+            for prefix in ("start", "end"):
+                if payload.get(prefix + "_coordinates") == trip.get(prefix + "_coordinates"):
+                    for suffix in ("_address", "_poi", "_address_source"):
+                        if prefix + suffix in trip:
+                            payload[prefix + suffix] = trip[prefix + suffix]
             db.execute("UPDATE trips SET payload=? WHERE vehicle=? AND trip_id=?", (json.dumps(payload), vehicle, trip["trip_id"]))
+
+    def detail(self, vehicle, trip_id):
+        """Return retained observations only, scoped to this vehicle and trip."""
+        from .location import gcj02_to_wgs84
+        with self.connection() as db:
+            row = db.execute("SELECT payload,day FROM trips WHERE vehicle=? AND trip_id=?", (vehicle, trip_id)).fetchone()
+            if row is None:
+                raise TripError("trip_unavailable")
+            trip = dict(json.loads(row["payload"]), date=row["day"])
+            def utc(value):
+                dt = datetime.fromisoformat(value)
+                if dt.tzinfo is None:
+                    from zoneinfo import ZoneInfo
+                    dt = dt.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+                return dt.astimezone(timezone.utc).isoformat()
+            first, last = utc(trip["start_time"]), utc(trip["end_time"])
+            rows = db.execute("SELECT payload FROM samples WHERE vehicle=? AND source_time>=? AND source_time<=? ORDER BY source_time", (vehicle, first, last)).fetchall()
+        points = []
+        for row in rows:
+            point = json.loads(row[0])
+            coord = point.get("coordinates")
+            location = None
+            if coord:
+                latitude, longitude = gcj02_to_wgs84(coord["latitude"], coord["longitude"])
+                location = {"latitude": latitude, "longitude": longitude}
+            points.append({"time": point["time"], "received_at": point.get("received_at"),
+                           "state": point.get("state"), "powered": point.get("powered"),
+                           "odometer": point.get("odometer"), "coordinates": coord,
+                           "map_coordinates": location})
+        endpoints = []
+        for prefix in ("start", "end"):
+            coord = trip.get(prefix + "_coordinates")
+            if coord and trip.get(prefix + "_parking_confirmed"):
+                latitude, longitude = gcj02_to_wgs84(coord["latitude"], coord["longitude"])
+                endpoints.append({"role": prefix, "map_coordinates": {"latitude": latitude, "longitude": longitude},
+                                  "time": trip.get(prefix + "_location_sample_time")})
+        return {"trip": trip, "points": points, "endpoints": endpoints, "coordinate_system": "WGS-84",
+                "source_coordinate_system": "GCJ-02", "route_source": "retained_telemetry",
+                "individual_sample_times_verified": False}
 
     def import_rows(self, vehicle, days, trips):
         updated = datetime.now().astimezone().isoformat()
