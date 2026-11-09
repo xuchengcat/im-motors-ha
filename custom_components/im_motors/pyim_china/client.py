@@ -1,7 +1,7 @@
 """Persistent account client with VIN-scoped, cached read-only telemetry.
 
 Blocking I/O is called from HA's executor. Never log request/response values.
-Metadata failure is latched on disk so HA refresh/restart cannot retry it.
+Unsafe failures stop on disk; transient GET failures use durable backoff.
 """
 from dataclasses import dataclass, field
 import hashlib
@@ -17,7 +17,7 @@ from .credential_store import key_context, vault_for_path, VaultError
 from .local_production_config import load_local_production_config
 from .offline_read_request import OfflineReadClient
 from .offline_read_response import AuthenticationExpired, ResponseError, Presence, CategorySnapshot
-from .restricted_transport import RestrictedHttpsTransport, TransportError
+from .restricted_transport import RestrictedHttpsTransport, TransportError, RetryableReadError
 from .runtime_lock import AccountFileLock
 from .standalone_refresh_probe import load_session, refresh_once
 
@@ -32,6 +32,10 @@ class ClientFailure(RuntimeError):
 
 class LoginRequired(ClientFailure):
     pass
+
+
+class TemporaryReadFailure(ClientFailure):
+    """Read polling will resume after a durable, bounded backoff."""
 
 
 @dataclass(frozen=True, repr=False)
@@ -83,10 +87,17 @@ class AccountClient:
     def _validate(self):
         login = self._vault("ha-login.imvault")
         if login.path.exists():
-            from .ha_sms_login import LOGIN_BLOCKING_STATUSES
+            from .ha_sms_login import LOGIN_BLOCKING_STATUSES, CHALLENGE_LIFETIME_MS
             state = login._load_payload()
             if state.get("kind") != "ha-sms-login" or state.get("schema_version") != 1:
                 raise ClientFailure("Invalid retained SMS authentication state")
+            sent = state.get("sent_time_ms")
+            if (state.get("status") == "awaiting_code" and type(sent) is int
+                    and self.clock() - sent >= CHALLENGE_LIFETIME_MS):
+                # No login POST has occurred in this state. Keep the evidence,
+                # but an abandoned SMS challenge must not disable a valid session.
+                state["status"] = "challenge_expired"
+                login._save_payload(state)
             if state.get("status") in LOGIN_BLOCKING_STATUSES:
                 raise ClientFailure("SMS authentication is pending; finish or review the login attempt")
         session, credentials = load_session(self.data_dir / "session.imvault")
@@ -150,10 +161,19 @@ class AccountClient:
 
     def update(self, *, include_telemetry=False, force_telemetry=False):
         """Check auth each minute; metadata/telemetry have separate durable caches."""
+        read_failures = 0
         try:
             with key_context(self.key_file), AccountFileLock(self.data_dir):
-                if (self.data_dir / "ha-fault.imvault").exists():
+                fault_path = self.data_dir / "ha-fault.imvault"
+                fault = self._vault("ha-fault.imvault")._load_payload() if fault_path.exists() else {}
+                transient = (fault.get("reason") == "temporary_read_failure"
+                    and type(fault.get("retry_at_ms")) is int
+                    and type(fault.get("read_failures")) is int
+                    and 1 <= fault["read_failures"] <= 16)
+                if fault and not transient:
                     raise ClientFailure("Account requests paused; review retained state and resume manually")
+                if transient:
+                    read_failures = fault["read_failures"]
                 _, credentials, config = self._validate()
                 now_ms = self.clock()
                 if credentials.refresh_decision(now_ms) == RefreshDecision.DUE:
@@ -163,6 +183,9 @@ class AccountClient:
                     _, credentials = load_session(self.data_dir / "session.imvault")
                     if credentials.refresh_decision(self.clock()) != RefreshDecision.CURRENT:
                         raise LoginRequired("Refresh returned no future schedule")
+                # Token maintenance runs even while vehicle reads are backing off.
+                if transient and self.clock() < fault["retry_at_ms"]:
+                    raise TemporaryReadFailure("Temporary cloud read failure; retry scheduled")
                 cache = self._vault("ha-metadata.imvault")
                 saved = cache._load_payload() if cache.path.exists() else None
                 if (saved is None or (include_telemetry and "vins" not in saved) or now_ms < saved["time_ms"] or
@@ -188,6 +211,8 @@ class AccountClient:
                 if include_telemetry:
                     telemetry, telemetry_time = self._telemetry(
                         saved, credentials, config, now_ms, force=force_telemetry)
+                if transient:
+                    fault_path.unlink(missing_ok=True)
                 return AccountSnapshot(vehicles, saved["time_ms"], credentials.expiration_time,
                                        credentials.suggest_refresh_time, MappingProxyType(telemetry), telemetry_time)
         except ClientFailure:
@@ -195,8 +220,14 @@ class AccountClient:
         except AuthenticationExpired:
             self._record_fault("authentication_expired")
             raise LoginRequired("Account authentication expired; manual login required") from None
-        except (CredentialError, VaultError, ResponseError, TransportError, OSError, KeyError, TypeError, ValueError):
-            self._record_fault("account_operation_failed")
+        except RetryableReadError:
+            failures = min(read_failures + 1, 16)
+            delay_ms = min(60 * 2 ** min(failures - 1, 4), 900) * 1000
+            self._record_fault("temporary_read_failure", read_failures=failures,
+                               retry_at_ms=self.clock() + delay_ms)
+            raise TemporaryReadFailure("Temporary cloud read failure; retry scheduled") from None
+        except (CredentialError, VaultError, ResponseError, TransportError, OSError, KeyError, TypeError, ValueError) as error:
+            self._record_fault("account_operation_failed", failure_type=type(error).__name__)
             raise ClientFailure("Account operation failed; retained state requires manual review") from None
 
     def _telemetry(self, metadata, credentials, config, now_ms, *, force=False):
@@ -241,10 +272,11 @@ class AccountClient:
             parsed[identifier] = result
         return parsed, saved["time_ms"]
 
-    def _record_fault(self, reason):
+    def _record_fault(self, reason, **details):
         # Best effort: refresh already has its own durable pending marker.
         try:
             with key_context(self.key_file), AccountFileLock(self.data_dir):
-                self._vault("ha-fault.imvault")._save_payload({"kind": "ha-fault", "reason": reason})
+                self._vault("ha-fault.imvault")._save_payload(
+                    {"kind": "ha-fault", "reason": reason, "time_ms": self.clock(), **details})
         except Exception:
             pass

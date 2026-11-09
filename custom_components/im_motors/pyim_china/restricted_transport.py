@@ -17,6 +17,10 @@ class TransportError(RuntimeError):
     pass
 
 
+class RetryableReadError(TransportError):
+    """A transient GET failure; never used for token rotation or SMS POSTs."""
+
+
 @dataclass(frozen=True, repr=False)
 class HttpResponse:
     status: int
@@ -130,6 +134,8 @@ class RestrictedHttpsTransport:
             response = connection.getresponse()
             # Refuse 3xx without issuing another request or forwarding credentials.
             if not 200 <= response.status < 300 and not (self.capture_http_errors and 400 <= response.status < 600):
+                if request.method == "GET" and (response.status in (408, 429) or 500 <= response.status < 600):
+                    raise RetryableReadError(f"Temporary read HTTP status {response.status}")
                 raise TransportError(f"HTTP status {response.status}; no automatic retry")
             raw = response.read(self.max_response_bytes + 1)
             if len(raw) > self.max_response_bytes:
@@ -146,6 +152,8 @@ class RestrictedHttpsTransport:
         except TransportError:
             raise
         except (OSError, http.client.HTTPException, UnicodeError, ValueError):
+            if request.method == "GET":
+                raise RetryableReadError("Temporary HTTPS read failure") from None
             raise TransportError("HTTPS request failed; outcome may be unknown; no retry") from None
         finally:
             if connection is not None:

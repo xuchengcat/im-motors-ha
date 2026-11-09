@@ -11,6 +11,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN, CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL
 from .pyim_china import AccountClient, AccountSnapshot, ClientFailure, LoginRequired
+from .pyim_china.client import TemporaryReadFailure
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,5 +51,7 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
             return snapshot
         except LoginRequired:
             raise ConfigEntryAuthFailed("Manual account login required") from None
+        except TemporaryReadFailure:
+            raise UpdateFailed("Temporary cloud read failure; automatic retry scheduled") from None
         except ClientFailure:
             raise UpdateFailed("Account requests paused; review protected state and reconfigure to resume") from None
