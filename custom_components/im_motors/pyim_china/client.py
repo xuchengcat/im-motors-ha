@@ -257,7 +257,7 @@ class AccountClient:
                 # Retain the response encrypted before parsing; no raw responses in HA.
                 self._vault("ha-telemetry-response.imvault")._save_payload(retained)
                 result = reader.parse_response("vehicle_tab", response.body, response_headers=response.headers)
-                if result.vin.value != vin:
+                if not self._telemetry_matches_vehicle(result, vin, len(vins)):
                     raise ResponseError("Vehicle telemetry identity does not match association")
                 responses[identifier] = retained
             saved = {"kind": "ha-telemetry", "time_ms": now_ms, "responses": responses}
@@ -267,10 +267,18 @@ class AccountClient:
         for identifier, vin in vins.items():
             response = saved["responses"][identifier]
             result = reader.parse_response("vehicle_tab", response["body"], response_headers=response["headers"])
-            if result.vin.value != vin:
+            if not self._telemetry_matches_vehicle(result, vin, len(vins)):
                 raise ResponseError("Cached telemetry identity does not match association")
             parsed[identifier] = result
         return parsed, saved["time_ms"]
+
+    @staticmethod
+    def _telemetry_matches_vehicle(result, requested_vin, vehicle_count):
+        # Single-car responses may omit VIN. The request and cache remain scoped
+        # to the VIN from account metadata; never invent a VIN in the response.
+        if result.vin.presence in (Presence.MISSING, Presence.NULL):
+            return vehicle_count == 1
+        return result.vin.value == requested_vin
 
     def _record_fault(self, reason, **details):
         # Best effort: refresh already has its own durable pending marker.

@@ -113,8 +113,8 @@ def test_cache_restart_interval_and_owned_request_scope(account):
         assert VIN.encode() not in (account["data"] / filename).read_bytes()
 
 
-@pytest.mark.parametrize("category", [{}, {"vin": None}, {"vin": "LSY00000000000002"}])
-def test_mismatched_or_missing_response_vin_stops_durably(account, category):
+@pytest.mark.parametrize("category", [{"vin": ""}, {"vin": "LSY00000000000002"}])
+def test_mismatched_response_vin_stops_durably(account, category):
     account["transport"].send.side_effect = [response([{"vin": VIN}]), response({"category": category})]
     with pytest.raises(ClientFailure):
         account["client"].update(include_telemetry=True)
@@ -122,6 +122,31 @@ def test_mismatched_or_missing_response_vin_stops_durably(account, category):
         account["client"].update(include_telemetry=True)
     assert account["transport"].send.call_count == 2
     assert (account["data"] / "ha-telemetry-response.imvault").exists()
+
+
+@pytest.mark.parametrize("vin_field", [{}, {"vin": None}])
+def test_single_vehicle_without_response_vin_survives_cache_and_restart(account, vin_field):
+    account["transport"].send.side_effect = [response([{"vin": VIN}]),
+        response({"category": {**vin_field, "period": {"originalBmsPackSOCDsp": 73.9}}})]
+    first = account["client"].update(include_telemetry=True)
+    identifier = first.vehicles[0].identifier
+    assert values(first.telemetry[identifier])["soc"] == 73.9
+    assert first.telemetry[identifier].vin.value is None
+    restarted = AccountClient(account["data"], account["key"],
+        clock=account["clock"], transport_factory=account["factory"])
+    second = restarted.update(include_telemetry=True)
+    assert second.telemetry == first.telemetry
+    assert account["transport"].send.call_count == 2
+    assert not (account["data"] / "ha-fault.imvault").exists()
+
+
+@pytest.mark.parametrize("vin_field", [{}, {"vin": None}])
+def test_multi_vehicle_without_response_vin_still_stops(account, vin_field):
+    account["transport"].send.side_effect = [response([{"vin": VIN}, {"vin": "LSY00000000000002"}]),
+        response({"category": vin_field})]
+    with pytest.raises(ClientFailure):
+        account["client"].update(include_telemetry=True)
+    assert account["transport"].send.call_count == 2
 
 
 def test_tab_token_expired_never_reauthenticates_automatically(account):
