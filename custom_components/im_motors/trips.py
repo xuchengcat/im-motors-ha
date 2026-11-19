@@ -19,6 +19,7 @@ ERRORS = {
     "multiple_vehicles": "官方日历当前仅支持关联一辆车的账号，避免混淆车辆历史。",
     "cloud_history_disabled": "请在主账号选项中启用官方历史行程查询。",
     "cloud_date_range": "官方行程每次最多同步31天，结束日期不能晚于今天。",
+    "partial_archive": "部分日期未能完整归档，其余日期已保存；失败日期保留原数据，下次自动任务会再次检查。",
     "incomplete_day": "行程分页不完整，已保留原有历史，请稍后手动重试。",
     "invalid_response": "行程响应无效，已保留原有历史。",
     "business_error": "智己拒绝行程请求，请检查后手动重试。",

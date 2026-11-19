@@ -192,6 +192,8 @@ async def test_real_ha_primary_setup_sync_and_web_calendar(hass, account):
     await manager.task
     assert manager.status['state'] == 'complete'
     assert manager.status['processed'] == 1
+    manager.reader.read.reset_mock()
+    manager.store.state('calendar_remote', {'available_dates': [DAY, '2026-10-17']})
     conn = Mock(user=SimpleNamespace(is_admin=True))
     ws_entries(hass, conn, {'id': 1, 'type': 'im_motors/trips/entries'})
     await hass.async_block_till_done(wait_background_tasks=True)
@@ -202,6 +204,8 @@ async def test_real_ha_primary_setup_sync_and_web_calendar(hass, account):
     result = conn.send_result.call_args.args[1]
     assert result['source'] == 'official_cloud'
     assert result['calendar']['available_dates'] == [DAY]
+    assert result['calendar']['source'] == 'local_archive'
+    manager.reader.read.assert_not_called()
     assert len(result['trips']) == 1
     with manager.store.connection() as db:
         assert db.execute('SELECT COUNT(*) FROM samples').fetchone()[0] == 0

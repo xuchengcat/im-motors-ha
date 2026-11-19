@@ -80,14 +80,79 @@ class TripStore:
         with self.connection() as db:
             if no_access and db.execute("SELECT 1 FROM days WHERE vehicle=? AND day=?", (vehicle, result["date"])).fetchone():
                 return  # Losing remote permission never erases a prior archive.
+            previous = db.execute("SELECT payload,complete FROM days WHERE vehicle=? AND day=?",
+                                  (vehicle, result["date"])).fetchone()
+            if (result.get("source") == "official_cloud" and result["status"] == "no_trips"
+                    and previous and previous["complete"]
+                    and db.execute("SELECT 1 FROM trips WHERE vehicle=? AND day=? LIMIT 1",
+                                   (vehicle, result["date"])).fetchone()):
+                # An expired remote day must not zero a retained day's totals.
+                summary = dict(json.loads(previous["payload"]), remote_status="no_trips",
+                               remote_checked_at=updated)
             db.execute("INSERT OR REPLACE INTO days VALUES (?,?,?,?,?)",
                        (vehicle, result["date"], json.dumps(summary), int(result["list_complete"]), updated))
             if no_access:
                 return
             db.execute("UPDATE trips SET source_present=0 WHERE vehicle=? AND day=?", (vehicle, result["date"]))
             for trip in result["trips"]:
+                trip = dict(trip)
+                if result.get("source") == "official_cloud":
+                    row = db.execute("SELECT payload FROM trips WHERE vehicle=? AND trip_id=?",
+                                     (vehicle, trip["trip_id"])).fetchone()
+                    retained = json.loads(row[0]) if row else {}
+                    if not trip.get("route_points") and retained.get("route_points"):
+                        trip["route_points"] = retained["route_points"]
+                    for prefix in ("start", "end"):
+                        if not trip.get(prefix + "_coordinates") and retained.get(prefix + "_coordinates"):
+                            trip[prefix + "_coordinates"] = retained[prefix + "_coordinates"]
+                        if (trip.get(prefix + "_coordinates") == retained.get(prefix + "_coordinates")
+                                and not trip.get(prefix + "_address")):
+                            for suffix in ("_address", "_poi", "_address_source"):
+                                if retained.get(prefix + suffix):
+                                    trip[prefix + suffix] = retained[prefix + suffix]
                 db.execute("INSERT OR REPLACE INTO trips VALUES (?,?,?,?,?,?)",
                            (vehicle, trip["trip_id"], result["date"], json.dumps(trip), 1, updated))
+
+    def cloud_payloads(self, vehicle, day):
+        """Full retained details for ID comparison; never sent in list polling."""
+        with self.connection() as db:
+            rows = db.execute("SELECT trip_id,payload FROM trips WHERE vehicle=? AND day=?",
+                              (vehicle, day)).fetchall()
+        return {row["trip_id"]: json.loads(row["payload"]) for row in rows}
+
+    def calendar(self, vehicle):
+        """Expose archived dates, including dates older than the remote window."""
+        with self.connection() as db:
+            dates = [row[0] for row in db.execute(
+                "SELECT DISTINCT day FROM trips WHERE vehicle=? ORDER BY day", (vehicle,))]
+        return {"available_dates": dates, "source": "local_archive"}
+
+    def claim_daily_sync(self, day, started_at):
+        validate_range(day, day)
+        with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT payload FROM metadata WHERE key='cloud_auto_sync'").fetchone()
+            state = json.loads(row[0]) if row else {}
+            same_day = state.get("last_attempt_date") == day
+            if same_day and state.get("state") not in ("running", "interrupted"):
+                return False
+            state.update(last_attempt_date=day, started_at=started_at, state="running", error=None,
+                         resumes=(state.get("resumes", 0) + 1) if same_day else 0)
+            db.execute("INSERT OR REPLACE INTO metadata VALUES (?,?)", ("cloud_auto_sync", json.dumps(state)))
+        return True
+
+    def finish_daily_sync(self, day, state, finished_at, error=None, processed=0, downloaded=0):
+        with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT payload FROM metadata WHERE key='cloud_auto_sync'").fetchone()
+            saved = json.loads(row[0]) if row else {}
+            if saved.get("last_attempt_date") != day:
+                return
+            saved.update(state=state, finished_at=finished_at, error=error,
+                         processed_dates=processed, downloaded_details=downloaded)
+            if state == "complete":
+                saved["last_success_date"] = day
+            db.execute("INSERT OR REPLACE INTO metadata VALUES (?,?)", ("cloud_auto_sync", json.dumps(saved)))
 
     def days(self, vehicle, start, end):
         validate_range(start, end)

@@ -76,7 +76,9 @@ async def ws_query(hass, connection, msg):
             "pending_parking_since": (candidate.get("first") or {}).get("time") if recording.get("pending_endpoint") else None}
         status["message"] = ERRORS.get(status.get("error"), "")
         status["address_message"] = ERRORS.get(status.get("address_error"), "")
-        calendar = (await hass.async_add_executor_job(manager.store.state, "calendar")) if manager.source == "official_cloud" else {}
+        calendar = (await hass.async_add_executor_job(manager.store.calendar, msg["vehicle_id"])) if manager.source == "official_cloud" else {}
+        if manager.source == "official_cloud":
+            status["auto_sync"] = await hass.async_add_executor_job(manager.store.state, "cloud_auto_sync")
         connection.send_result(msg["id"], {"days": days, "trips": trips, "stats": stats, "status": status,
             "source": manager.source, "calendar": calendar})
     except TripError as error:
@@ -212,5 +214,5 @@ async def async_setup_web(hass):
             "/im_motors/trips-panel.js", str(Path(__file__).with_name("frontend") / "trips-panel.js"), False)])
         await panel_custom.async_register_panel(hass, frontend_url_path="im-motors-trips",
             webcomponent_name="im-motors-trips-panel", sidebar_title="智己行程", sidebar_icon="mdi:calendar-clock",
-            module_url="/im_motors/trips-panel.js?v=cloud-calendar-2", require_admin=True)
+            module_url="/im_motors/trips-panel.js?v=cloud-calendar-3", require_admin=True)
     hass.data[key] = True
