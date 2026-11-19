@@ -3,6 +3,7 @@ from .const import INTEGRATION_VERSION, DEFAULT_TELEMETRY_INTERVAL
 from collections import Counter
 
 from .location import coordinates, coordinate_format, location_status
+from .pyim_china.debug_fields import DEBUG_FIELDS
 
 
 async def async_get_config_entry_diagnostics(hass, entry):
@@ -11,6 +12,10 @@ async def async_get_config_entry_diagnostics(hass, entry):
     locations = tuple(snapshot.telemetry.values()) if snapshot else ()
     trips = getattr(coordinator, "trips", None)
     return {"integration_version": INTEGRATION_VERSION, "vehicle_telemetry_enabled": True,
+            "raw_debug_field_count": len(DEBUG_FIELDS),
+            "raw_debug_fields_enabled_by_default": True,
+            "vehicle_control_enabled": bool(coordinator and coordinator.control_enabled),
+            "vehicle_control_execution_verified": False,
             "last_update_success": bool(coordinator and coordinator.last_update_success),
             "associated_vehicle_count": len(snapshot.vehicles) if snapshot else 0,
             "vehicles_with_telemetry": len(snapshot.telemetry) if snapshot else 0,

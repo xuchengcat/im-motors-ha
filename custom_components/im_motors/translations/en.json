@@ -1,5 +1,5 @@
 {
-  "title": "IM Motors (read only)",
+  "title": "IM Motors",
   "config": {
     "step": {
       "user": {
@@ -25,19 +25,23 @@
       },
       "import": {
         "title": "Import an encrypted session",
-        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline. After setup, read-only cloud vehicle data is polled at the configured interval (default 60 minutes, minimum 5); reads may wake the vehicle.",
+        "description": "Import an existing encrypted session. Enter the directory containing session.imvault and device.imvault, and the matching key path. An existing production.imvault is preserved; otherwise bundled common protocol parameters are used. This step checks files offline. After setup, read-only cloud vehicle data is polled at the configured interval (default 60 minutes, minimum 5); reads may wake the vehicle.\n\nFull mode sends real vehicle commands. It may unlock doors, move windows or lids, start charging or consume energy. Non-official APIs can fail or change. None of these controls have been vehicle-tested by this release; server acceptance does not confirm execution. Check the vehicle and its surroundings before every action. Software is provided AS IS under the MIT license; to the extent permitted by applicable law, the authors disclaim warranties and liability. Read-only mode may also wake the vehicle.\n\nAccess mode is chosen only during initial setup and cannot be changed later. Reconfiguration and reauthentication retain the original mode.",
         "data": {
           "data_dir": "Encrypted data directory",
           "key_file": "External key file",
-          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)"
+          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)",
+          "access_mode": "Access mode",
+          "accept_control_risk": "I understand and accept the vehicle control risks"
         }
       },
       "sms": {
         "title": "Phone and SMS login",
-        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS. After setup, read-only cloud vehicle data is polled at the configured interval (default 60 minutes, minimum 5); reads may wake the vehicle.",
+        "description": "Enter a mainland China mobile number and submit to send an SMS, then enter the verification code. Account encryption keys are generated locally. HA configuration does not store your phone number. A valid pending challenge is resumed without another SMS. After setup, read-only cloud vehicle data is polled at the configured interval (default 60 minutes, minimum 5); reads may wake the vehicle.\n\nFull mode sends real vehicle commands. It may unlock doors, move windows or lids, start charging or consume energy. Non-official APIs can fail or change. None of these controls have been vehicle-tested by this release; server acceptance does not confirm execution. Check the vehicle and its surroundings before every action. Software is provided AS IS under the MIT license; to the extent permitted by applicable law, the authors disclaim warranties and liability. Read-only mode may also wake the vehicle.\n\nAccess mode is chosen only during initial setup and cannot be changed later. Reconfiguration and reauthentication retain the original mode.",
         "data": {
           "phone": "Mobile number",
-          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)"
+          "telemetry_interval_minutes": "Vehicle update interval (minutes, minimum 5)",
+          "access_mode": "Access mode",
+          "accept_control_risk": "I understand and accept the vehicle control risks"
         }
       },
       "sms_code": {
@@ -50,7 +54,7 @@
       },
       "paths": {
         "title": "Update paths or resume requests",
-        "description": "Cloud requests stop after a failure. After offline review or recovery, select resume. Unresolved refresh attempts continue to block requests.",
+        "description": "Cloud requests stop after a failure. After offline review or recovery, select resume. Unresolved refresh attempts continue to block requests.\n\nFull mode sends real vehicle commands. It may unlock doors, move windows or lids, start charging or consume energy. Non-official APIs can fail or change. None of these controls have been vehicle-tested by this release; server acceptance does not confirm execution. Check the vehicle and its surroundings before every action. Software is provided AS IS under the MIT license; to the extent permitted by applicable law, the authors disclaim warranties and liability. Read-only mode may also wake the vehicle.\nIf a vehicle command timed out or was interrupted, inspect the vehicle first. Resuming also acknowledges its unknown outcome and permits new commands; it never replays the previous command.\n\nAccess mode is chosen only during initial setup and cannot be changed later. Reconfiguration and reauthentication retain the original mode.",
         "data": {
           "data_dir": "Encrypted data directory",
           "key_file": "External key file",
@@ -69,7 +73,10 @@
       "login_rejected": "The server rejected login. Check your code, or select resend to request a new code.",
       "code_expired": "The local verification flow expired. Select resend to request a new code.",
       "invalid_storage": "Unable to initialize local account storage. Check permissions in the HA configuration directory. For existing data, restore the matching key and storage marker; missing or damaged keys are never replaced automatically.",
-      "invalid_interval": "Enter a whole number of at least 5 minutes."
+      "invalid_interval": "Enter a whole number of at least 5 minutes.",
+      "invalid_access_mode": "Choose a valid access mode.",
+      "control_risk_required": "Accept the control risks before enabling full mode.",
+      "access_mode_locked": "Access mode is fixed by initial setup and cannot be changed."
     },
     "abort": {
       "already_configured": "This client identity is already configured.",
@@ -119,8 +126,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "Local trip recorder and AMap",
-        "description": "Record future trips from existing HA vehicle status, odometer and location. Keeps your existing account and phone login; no owner login is required. Start/end times are sampled observations, mileage uses integer-km odometer differences. Cached/stale snapshots are skipped; missed short trips are labelled as inferred intervals. Records persist independently of Recorder. Optional AMap Web Service Key is encrypted locally; blank keeps the saved key.",
+        "title": "Trip and address settings",
+        "description": "Record future trips from existing HA vehicle status, odometer and location. Keeps your existing account and phone login; no owner login is required. Start/end times are sampled observations, mileage uses integer-km odometer differences. Cached/stale snapshots are skipped; missed short trips are labelled as inferred intervals. Records persist independently of Recorder. Optional AMap Web Service Key is encrypted locally; blank keeps the saved key.\n\nAccess mode is chosen only during initial setup and cannot be changed later. Reconfiguration and reauthentication retain the original mode.",
         "data": {
           "trip_history_enabled": "Record trips from HA vehicle telemetry",
           "amap_api_key": "AMap Web Service API Key (blank keeps saved key)",
@@ -132,7 +139,18 @@
     "error": {
       "invalid_amap_key": "Enter a 32-character hexadecimal Web Service Key.",
       "invalid_storage": "Could not save encrypted settings.",
-      "invalid_interval": "Enter a whole number of at least 5 minutes."
+      "invalid_interval": "Enter a whole number of at least 5 minutes.",
+      "invalid_access_mode": "Choose a valid access mode.",
+      "control_risk_required": "Accept the control risks before enabling full mode.",
+      "access_mode_locked": "Access mode is fixed by initial setup and cannot be changed."
+    }
+  },
+  "selector": {
+    "access_mode": {
+      "options": {
+        "read_only": "Read only (default)",
+        "full": "Full functionality (experimental vehicle control)"
+      }
     }
   }
 }

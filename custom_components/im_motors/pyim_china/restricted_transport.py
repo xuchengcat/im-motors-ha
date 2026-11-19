@@ -44,10 +44,12 @@ class RestrictedHttpsTransport:
                  enable_management=False,
                  enable_isc_vehicles=False,
                  enable_vehicle_reads=False, enable_vehicle_tab=False, enable_vehicle_refresh=False, allowed_vin=None,
+                 control_request=None,
                  timeout=15, max_response_bytes=2 * 1024 * 1024, capture_http_errors=False):
-        if (enable_vehicle_reads or enable_vehicle_tab or enable_vehicle_refresh) and (not isinstance(allowed_vin, str) or not allowed_vin):
+        if (enable_vehicle_reads or enable_vehicle_tab or enable_vehicle_refresh or control_request is not None) and (not isinstance(allowed_vin, str) or not allowed_vin):
             raise TransportError("Owned vehicle scope required")
         self.enable_vehicle_reads = enable_vehicle_reads
+        self.control_request = control_request
         self.enable_vehicle_tab = enable_vehicle_tab
         self.enable_vehicle_refresh = enable_vehicle_refresh
         self.enable_sms_login = enable_sms_login
@@ -69,7 +71,21 @@ class RestrictedHttpsTransport:
                 or url.fragment):
             raise TransportError("Unexpected request origin")
         body = getattr(request, "body", None)
-        if request.method == "POST" and url.path == REFRESH_PATH:
+        from .vehicle_control import CONTROL_PATHS
+        if url.path in CONTROL_PATHS:
+            import json
+            allowed = self.control_request
+            if (allowed is None or request.method != "POST" or url.query
+                    or request.url != allowed.url or body != allowed.body
+                    or not isinstance(body, bytes)):
+                raise TransportError("Vehicle control disabled or outside permitted request")
+            try:
+                payload = json.loads(body)
+            except (ValueError, UnicodeError):
+                raise TransportError("Invalid vehicle control body") from None
+            if not isinstance(payload, dict) or payload.get("vin") != self.allowed_vin:
+                raise TransportError("Control outside owned vehicle scope")
+        elif request.method == "POST" and url.path == REFRESH_PATH:
             if url.query or not isinstance(body, bytes) or not body:
                 raise TransportError("Invalid refresh request")
         elif url.path in ("/app/login/v3/user/captcha", "/app/login/v4/user/mobileSMSSend",

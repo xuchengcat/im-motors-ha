@@ -8,11 +8,42 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 
 from .const import (DOMAIN, CONF_DATA_DIR, CONF_KEY_FILE, CONF_RESUME,
-                    CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL, MIN_TELEMETRY_INTERVAL)
+                    CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL, MIN_TELEMETRY_INTERVAL,
+                    CONF_ACCESS_MODE, CONF_CONTROL_RISK, MODE_READ_ONLY, MODE_FULL)
 from .pyim_china import AccountClient, ClientFailure, LoginRequired
 from .pyim_china.ha_sms_login import HaSmsLogin, SmsLoginFailure
 from .pyim_china.managed_storage import managed_paths
 from .pyim_china.credential_store import VaultError
+
+
+def access_schema(entry=None):
+    if entry is not None:
+        return {}
+    defaults = {}
+    return {
+        vol.Required(CONF_ACCESS_MODE, default=defaults.get(CONF_ACCESS_MODE, MODE_READ_ONLY)):
+            selector.SelectSelector(selector.SelectSelectorConfig(
+                options=[MODE_READ_ONLY, MODE_FULL], translation_key="access_mode", mode="dropdown")),
+        vol.Required(CONF_CONTROL_RISK, default=defaults.get(CONF_CONTROL_RISK, False)): bool,
+    }
+
+
+def access_input(data, entry=None):
+    defaults = entry.data if entry else {}
+    if entry is not None:
+        fixed = {CONF_ACCESS_MODE: defaults.get(CONF_ACCESS_MODE, MODE_READ_ONLY),
+                 CONF_CONTROL_RISK: defaults.get(CONF_CONTROL_RISK, False)}
+        if any(key in data and (data[key] != value or type(data[key]) is not type(value))
+               for key, value in fixed.items()):
+            raise vol.Invalid("access_mode_locked")
+        return fixed
+    mode = data.get(CONF_ACCESS_MODE, defaults.get(CONF_ACCESS_MODE, MODE_READ_ONLY))
+    accepted = data.get(CONF_CONTROL_RISK, defaults.get(CONF_CONTROL_RISK, False))
+    if mode not in (MODE_READ_ONLY, MODE_FULL) or type(accepted) is not bool:
+        raise vol.Invalid("invalid_access_mode")
+    if mode == MODE_FULL and not accepted:
+        raise vol.Invalid("control_risk_required")
+    return {CONF_ACCESS_MODE: mode, CONF_CONTROL_RISK: accepted if mode == MODE_FULL else False}
 
 
 async def validate_input(hass: HomeAssistant, data):
@@ -28,9 +59,10 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
     _paths = None
 
     def _sync_interval_option(self, entry, data):
-        if CONF_TELEMETRY_INTERVAL in entry.options:
-            self.hass.config_entries.async_update_entry(entry, options={**entry.options,
-                CONF_TELEMETRY_INTERVAL: data[CONF_TELEMETRY_INTERVAL]})
+        updates = {key: data[key] for key in (CONF_TELEMETRY_INTERVAL,)
+                   if key in entry.options and key in data}
+        if updates:
+            self.hass.config_entries.async_update_entry(entry, options={**entry.options, **updates})
 
     @staticmethod
     @callback
@@ -51,6 +83,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_DATA_DIR, default=defaults.get(CONF_DATA_DIR, "/config/im_motors/data")): str,
             vol.Required(CONF_KEY_FILE, default=defaults.get(CONF_KEY_FILE, "/run/secrets/im_vault_key")): str,
             **self._interval_schema(),
+            **access_schema(entry),
         })
 
     def _interval_schema(self):
@@ -76,7 +109,12 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
-                user_input = dict(user_input, **{CONF_TELEMETRY_INTERVAL: self._interval(user_input)})
+                access = access_input(user_input, self._login_entry())
+            except vol.Invalid as error:
+                return self.async_show_form(step_id="import", data_schema=self._path_schema(),
+                    errors={"base": str(error)})
+            try:
+                user_input = dict(user_input, **access, **{CONF_TELEMETRY_INTERVAL: self._interval(user_input)})
                 identity = await validate_input(self.hass, user_input)
                 if self.source == "reauth":
                     entry = self._get_reauth_entry()
@@ -96,12 +134,18 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                     return self.async_update_reload_and_abort(entry, data_updates=user_input)
                 await self.async_set_unique_id(identity)
                 self._abort_if_unique_id_configured()
-                return self.async_create_entry(title="智己汽车（只读）", data=user_input)
+                return self.async_create_entry(title="智己汽车", data=user_input)
         return self.async_show_form(step_id="import", data_schema=self._path_schema(), errors=errors)
 
     async def async_step_sms(self, user_input=None):
         errors = {}
         if user_input is not None:
+            try:
+                access = access_input(user_input, self._login_entry())
+            except vol.Invalid as error:
+                schema = vol.Schema({vol.Required("phone"): str, **self._interval_schema(),
+                                     **access_schema(self._login_entry())})
+                return self.async_show_form(step_id="sms", data_schema=schema, errors={"base": str(error)})
             try:
                 interval = self._interval(user_input)
             except vol.Invalid:
@@ -118,7 +162,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                     else:
                         paths = await self.hass.async_add_executor_job(managed_paths,
                             self.hass.config.path(".storage", DOMAIN), user_input["phone"])
-                    paths = dict(paths, **{CONF_TELEMETRY_INTERVAL: interval})
+                    paths = dict(paths, **access, **{CONF_TELEMETRY_INTERVAL: interval})
                     sms = HaSmsLogin(paths[CONF_DATA_DIR], paths[CONF_KEY_FILE])
                     identity = await self.hass.async_add_executor_job(sms.prepare)
                     if entry:
@@ -140,7 +184,8 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                     if completed:
                         return await self._finish_login()
                     return await self.async_step_sms_code()
-        schema = vol.Schema({vol.Required("phone"): str, **self._interval_schema()})
+        schema = vol.Schema({vol.Required("phone"): str, **self._interval_schema(),
+                             **access_schema(self._login_entry())})
         return self.async_show_form(step_id="sms", data_schema=schema, errors=errors)
 
     async def async_step_sms_code(self, user_input=None):
@@ -175,7 +220,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         if entry:
             self._sync_interval_option(entry, data)
             return self.async_update_reload_and_abort(entry, data_updates=data)
-        return self.async_create_entry(title="智己汽车（只读）", data=data)
+        return self.async_create_entry(title="智己汽车", data=data)
 
     async def async_step_reauth(self, entry_data):
         return await self.async_step_reauth_confirm()
@@ -197,13 +242,17 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             data = {key: user_input[key] for key in (CONF_DATA_DIR, CONF_KEY_FILE)}
             try:
+                data.update(access_input(user_input, entry))
+            except vol.Invalid as error:
+                return self.async_show_form(step_id="paths", data_schema=schema, errors={"base": str(error)})
+            try:
                 data[CONF_TELEMETRY_INTERVAL] = self._interval(user_input)
                 identity = await validate_input(self.hass, data)
                 if identity != entry.unique_id:
                     return self.async_abort(reason="wrong_account")
                 if user_input.get(CONF_RESUME):
                     client = AccountClient(data[CONF_DATA_DIR], data[CONF_KEY_FILE])
-                    await self.hass.async_add_executor_job(client.resume)
+                    await self.hass.async_add_executor_job(partial(client.resume, review_control=True))
             except vol.Invalid:
                 errors[CONF_TELEMETRY_INTERVAL] = "invalid_interval"
             except LoginRequired:
@@ -224,6 +273,10 @@ class ImMotorsOptionsFlow(OptionsFlow):
         client = AccountClient(entry.data[CONF_DATA_DIR], entry.data[CONF_KEY_FILE])
         errors = {}
         if user_input is not None:
+            try:
+                access = access_input(user_input, entry)
+            except vol.Invalid as error:
+                errors["base"] = str(error)
             key = user_input.get("amap_api_key", "").strip()
             interval = user_input.get(CONF_TELEMETRY_INTERVAL,
                 entry.options.get(CONF_TELEMETRY_INTERVAL, entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL)))
@@ -231,7 +284,7 @@ class ImMotorsOptionsFlow(OptionsFlow):
                 errors[CONF_TELEMETRY_INTERVAL] = "invalid_interval"
             elif key and not re.fullmatch(r"[a-fA-F0-9]{32}", key):
                 errors["amap_api_key"] = "invalid_amap_key"
-            else:
+            elif not errors:
                 try:
                     saved = await self.hass.async_add_executor_job(settings, client)
                     if key or user_input.get("clear_amap_key"):
@@ -241,11 +294,14 @@ class ImMotorsOptionsFlow(OptionsFlow):
                     errors["base"] = "invalid_storage"
                 else:
                     return self.async_create_entry(title="", data={
+                        **{key: value for key, value in entry.options.items()
+                           if key not in (CONF_ACCESS_MODE, CONF_CONTROL_RISK)},
                         "trip_history_enabled": user_input["trip_history_enabled"],
                         CONF_TELEMETRY_INTERVAL: interval,
                         "amap_key_configured": bool(saved.get("amap_api_key")),
                     })
         schema = vol.Schema({
+            **access_schema(entry),
             vol.Required("trip_history_enabled", default=entry.options.get("trip_history_enabled", False)): bool,
             vol.Required(CONF_TELEMETRY_INTERVAL, default=entry.options.get(CONF_TELEMETRY_INTERVAL,
                 entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL))): vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL)),

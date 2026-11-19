@@ -1,0 +1,1799 @@
+{
+  "schema_version": 1,
+  "fields": [
+    {
+      "group": "ac",
+      "field": "acAutoStatus",
+      "meaning_zh": "空调自动模式状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "acFilterLife",
+      "meaning_zh": "空调滤芯寿命原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "acFrontBlowerSpeed",
+      "meaning_zh": "前排空调鼓风机风速原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "acOnOffDspCmd",
+      "meaning_zh": "空调开关显示指令原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "acRearBlowerSwitchStatus",
+      "meaning_zh": "后排空调鼓风机开关状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "acStatus",
+      "meaning_zh": "空调运行状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "eventTime",
+      "meaning_zh": "空调事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "extremeTempControl",
+      "meaning_zh": "极端温度控制原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "htdRrWndAbotRsn",
+      "meaning_zh": "后窗加热中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "htdRrWndState",
+      "meaning_zh": "后窗加热状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "rmtACAbortRsn",
+      "meaning_zh": "远程空调中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "ac",
+      "field": "temperature",
+      "meaning_zh": "空调分组温度原始值（测点待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "aiParking",
+      "field": "aiParkingDisplay",
+      "meaning_zh": "智能泊车显示状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "aiParking",
+      "field": "aiParkingStatus",
+      "meaning_zh": "智能泊车状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "aiParking",
+      "field": "autodDrvngCndNotSatisfied",
+      "meaning_zh": "自动驾驶或泊车条件不满足原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "airbag",
+      "field": "vehCrashType",
+      "meaning_zh": "车辆碰撞类型原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "basic",
+      "field": "eventTime",
+      "meaning_zh": "车辆基础状态事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "basic",
+      "field": "fotaStatus",
+      "meaning_zh": "固件空中升级状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "basic",
+      "field": "powerSupplyWarning",
+      "meaning_zh": "供电告警原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "basic",
+      "field": "sysPwrMd",
+      "meaning_zh": "车辆系统电源模式原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "basic",
+      "field": "usgMd",
+      "meaning_zh": "车辆使用模式原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "bmsChrgCtrl",
+      "field": "bmsChrgCtrlDspCmd",
+      "meaning_zh": "BMS 充电控制显示指令原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bmsChrgCtrl",
+      "field": "bmsChrgCtrlResp",
+      "meaning_zh": "BMS 充电控制响应原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "acExecStatus",
+      "meaning_zh": "预约出行空调执行状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "acStatus",
+      "meaning_zh": "预约出行空调设置状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "batteryWarmExecStatus",
+      "meaning_zh": "预约出行电池预热执行状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "batteryWarmStatus",
+      "meaning_zh": "预约出行电池预热设置状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "tripBookHour",
+      "meaning_zh": "预约出行小时原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "tripBookMinute",
+      "meaning_zh": "预约出行分钟原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "tripBookStatus",
+      "meaning_zh": "预约出行状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "tripBookWeek",
+      "meaning_zh": "预约出行星期设置原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "tripBookWeekValue",
+      "meaning_zh": "预约出行星期值原始值（编码待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "bookTrip",
+      "field": "tripBookWeekly",
+      "meaning_zh": "预约出行每周重复设置原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "displayConfig",
+      "field": "fuelValueN",
+      "meaning_zh": "显示配置中的燃油数值N（含义与单位待核对）",
+      "meaning_status": "unknown",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "tab"
+    },
+    {
+      "group": "door",
+      "field": "eventTime",
+      "meaning_zh": "车门事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "door",
+      "field": "pwrLftgtManuClsReq",
+      "meaning_zh": "电动尾门手动关闭请求原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "doorHandle",
+      "field": "frontLeftDoorHandleStatus",
+      "meaning_zh": "左前门把手状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "doorHandle",
+      "field": "frontRightDoorHandleStatus",
+      "meaning_zh": "右前门把手状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "doorHandle",
+      "field": "rearLeftDoorHandleStatus",
+      "meaning_zh": "左后门把手状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "doorHandle",
+      "field": "rearRightDoorHandleStatus",
+      "meaning_zh": "右后门把手状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "driver",
+      "field": "driverFatigueLevel",
+      "meaning_zh": "驾驶员疲劳级别原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "fragrance",
+      "field": "frgrLifeEndRmndrlabel1",
+      "meaning_zh": "香氛通道1寿命结束提醒原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "fragrance",
+      "field": "frgrLifeEndRmndrlabel2",
+      "meaning_zh": "香氛通道2寿命结束提醒原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "fragrance",
+      "field": "frgrLifeEndRmndrlabel3",
+      "meaning_zh": "香氛通道3寿命结束提醒原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsAlternatingChargeCurrent",
+      "meaning_zh": "BMS 交流充电电流原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsBasicState",
+      "meaning_zh": "BMS 基础状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsChargeControl",
+      "meaning_zh": "BMS 充电控制原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsChargeStatus",
+      "meaning_zh": "BMS 充放电状态原码",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "partially_confirmed",
+      "evidence": "existing_diagnostic",
+      "source": "category",
+      "known_codes": {
+        "0": "none",
+        "1": "on_board_charging",
+        "2": "charge_done",
+        "3": "balancing",
+        "4": "charge_fault",
+        "5": "connecting",
+        "6": "connected_not_recognized",
+        "7": "connected_not_charged",
+        "8": "charge_cease",
+        "9": "charge_reserved",
+        "10": "off_board_charging",
+        "11": "discharging_gun_connecting",
+        "12": "multiple_charging",
+        "13": "discharging",
+        "14": "cease",
+        "15": "discharging_done",
+        "16": "wireless_charging"
+      },
+      "evidence_note": "现有App映射覆盖0至16；未见的其他码保留原值，不归为未充电。"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsChrgSpRsn",
+      "meaning_zh": "BMS 充电停止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsDsChargeTargetSOC",
+      "meaning_zh": "BMS 放电目标 SOC 原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsFastPlugOn",
+      "meaning_zh": "快充插枪连接标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsOnboardChargeTargetSOC",
+      "meaning_zh": "BMS 车载充电目标 SOC 原码，不能直接按百分比解释",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsReservationControl",
+      "meaning_zh": "BMS 预约充电控制原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "bmsSlowPlugOn",
+      "meaning_zh": "慢充插枪连接标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "ccuOffBdChrgrPlugOn",
+      "meaning_zh": "CCU 非车载充电插枪连接标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "ccuOnbdChrgrPlugOn",
+      "meaning_zh": "CCU 车载充电插枪连接标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "eventTime",
+      "meaning_zh": "高压电池事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "rmtBattWarmAbotRsn",
+      "meaning_zh": "远程电池预热中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "hvBattery",
+      "field": "rmtBattWarmSts",
+      "meaning_zh": "远程电池预热状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "imcuChrgTrgtSOCResp",
+      "meaning_zh": "IMCU 充电目标 SOC 设置响应原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "imcuReserChrgCtrlResp",
+      "meaning_zh": "IMCU 预约充电控制响应原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "imcuReserSpHourDspCmd",
+      "meaning_zh": "预约充电结束小时原始值",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "derived_input",
+      "source": "category",
+      "unit_hint": "hour of day",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "imcuReserSpMinuteDspCmd",
+      "meaning_zh": "预约充电结束分钟原始值",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "derived_input",
+      "source": "category",
+      "unit_hint": "minute of hour",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "imcuReserStMinuteDspCmd",
+      "meaning_zh": "预约充电开始分钟原始值",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "derived_input",
+      "source": "category",
+      "unit_hint": "minute of hour",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "wrlsChrgrAutocWrlsChrgngSetngResp",
+      "meaning_zh": "无线充电自动充电设置响应原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "imcuCharge",
+      "field": "wrlsChrgrAutocWrlsChrgngSetngSts",
+      "meaning_zh": "无线充电自动充电设置状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "centrConsoleLampSts",
+      "meaning_zh": "中控台灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "centrMapLampFLSts",
+      "meaning_zh": "左前阅读灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "centrMapLampFRSts",
+      "meaning_zh": "右前阅读灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "centrMapLampRLSts",
+      "meaning_zh": "左后阅读灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "centrMapLampRRSts",
+      "meaning_zh": "右后阅读灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "dipdBeamLightStatus",
+      "meaning_zh": "近光灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "fogLightStatus",
+      "meaning_zh": "雾灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "mainBeamLightStatus",
+      "meaning_zh": "远光灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "light",
+      "field": "sidePositionLightStatus",
+      "meaning_zh": "位置灯状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "lock",
+      "field": "eventTime",
+      "meaning_zh": "门锁事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "lock",
+      "field": "vehLockingState",
+      "meaning_zh": "车辆锁闭状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "partially_confirmed",
+      "evidence": "existing_diagnostic",
+      "source": "category",
+      "known_codes": {
+        "3": "locked (corroborated sample)"
+      },
+      "evidence_note": "本车样本和手机页面核对码3为锁闭；其余码不作完整枚举推断。"
+    },
+    {
+      "group": "motor",
+      "field": "tractionMotorState",
+      "meaning_zh": "驱动电机状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "appBattNoFuChargReq",
+      "meaning_zh": "App 电池未充满相关请求原码（具体用途待核对）",
+      "meaning_status": "unknown",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "battSOC",
+      "meaning_zh": "电池 SOC 原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "battVoltage",
+      "meaning_zh": "电池电压原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsAvlblEnrg",
+      "meaning_zh": "BMS 可用能量原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsChrgOtptCrntReq",
+      "meaning_zh": "BMS 充电输出电流请求值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsOfbdChrgrOtptCrnt",
+      "meaning_zh": "非车载充电机输出电流原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsOfbdChrgrOtptVol",
+      "meaning_zh": "非车载充电机输出电压原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsPackCrnt",
+      "meaning_zh": "动力电池包电流原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsPackSOC",
+      "meaning_zh": "BMS 电池包 SOC 原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "bmsPackSOCDsp",
+      "meaning_zh": "BMS 显示电量原始值",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category",
+      "unit_hint": "%",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "period",
+      "field": "bmsPackVol",
+      "meaning_zh": "动力电池包电压原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "chargedPower",
+      "meaning_zh": "chargedPower 原始值，具体含义与单位尚未确认",
+      "meaning_status": "unknown",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "chargingRemainTime",
+      "meaning_zh": "充电剩余时间原始值，1023为估算中",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "partially_confirmed",
+      "evidence": "existing_diagnostic",
+      "source": "category",
+      "unit_hint": "min",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "现有映射将1023视为估算中，负数无效；原始实体保留这些原码。",
+      "known_codes": {
+        "1023": "estimating"
+      }
+    },
+    {
+      "group": "period",
+      "field": "chrgngAddedElecRng",
+      "meaning_zh": "充电增加的续航里程原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "chrgngSpdngTime",
+      "meaning_zh": "充电耗时原始值",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category",
+      "unit_hint": "min",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "period",
+      "field": "elecConsumePer100Km",
+      "meaning_zh": "百公里电耗原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "eventTime",
+      "meaning_zh": "周期数据事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "fastCharge",
+      "meaning_zh": "快充相关标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "heading",
+      "meaning_zh": "车辆航向原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "icbSetVehRngAlg",
+      "meaning_zh": "ICB 车辆续航算法设置原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "icbVehElecRng",
+      "meaning_zh": "ICB 纯电续航原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "icbVehFuelRng",
+      "meaning_zh": "ICB 燃油续航原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "imcuChrgngEstdElecRng",
+      "meaning_zh": "IMCU 充电估算续航原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "imcuVehActuElecRng",
+      "meaning_zh": "IMCU 实际算法续航原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "imcuVehCltcElecRng",
+      "meaning_zh": "IMCU CLTC 续航原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "inCarAirQuality",
+      "meaning_zh": "车内空气质量原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "lateralAcceleration",
+      "meaning_zh": "横向加速度原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "longAcceleration",
+      "meaning_zh": "纵向加速度原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "onBdChrgrAltrCrntInptCrnt",
+      "meaning_zh": "车载充电机交流输入电流原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "onBdChrgrAltrCrntInptVol",
+      "meaning_zh": "车载充电机交流输入电压原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "outsideCarAirQuality",
+      "meaning_zh": "车外空气质量原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "remainDrvDistance",
+      "meaning_zh": "剩余可行驶距离原始值（算法待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "vehOdo",
+      "meaning_zh": "车辆累计里程原始值",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category",
+      "unit_hint": "km",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "period",
+      "field": "vehSpeed",
+      "meaning_zh": "车速原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "period",
+      "field": "version",
+      "meaning_zh": "周期数据版本标识（具体格式待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "powerTrain",
+      "field": "eptEnergyRecoveryLevel",
+      "meaning_zh": "动力系统能量回收级别原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "powerTrain",
+      "field": "eptReadyStatus",
+      "meaning_zh": "动力系统 Ready 状态原码，参与运行分类",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "derived_input",
+      "source": "category",
+      "evidence_note": "在现有运行分类中与shifterPosition组合使用，不单独推断车辆正在行驶。"
+    },
+    {
+      "group": "powerTrain",
+      "field": "remoteVehStartEPTCrankAbortRsn",
+      "meaning_zh": "远程启动动力系统起动阶段中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "powerTrain",
+      "field": "remoteVehStartEPTCrankAborted",
+      "meaning_zh": "远程启动动力系统起动阶段中止标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "powerTrain",
+      "field": "remoteVehStartEPTRunAbortRsn",
+      "meaning_zh": "远程启动动力系统运行阶段中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "powerTrain",
+      "field": "remoteVehStartEPTRunAborted",
+      "meaning_zh": "远程启动动力系统运行阶段中止标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "powerTrain",
+      "field": "remoteVehStartStatus",
+      "meaning_zh": "车辆远程启动状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "root",
+      "field": "isConnectedUpdateTime",
+      "meaning_zh": "车辆连接状态更新时间",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category",
+      "unit_hint": "ms since Unix epoch",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "root",
+      "field": "offLineDisconnect",
+      "meaning_zh": "离线断连标志原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "root",
+      "field": "offLineTime",
+      "meaning_zh": "车辆离线时间",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category",
+      "unit_hint": "ms since Unix epoch",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "root",
+      "field": "onLineTime",
+      "meaning_zh": "车辆上线时间",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "confirmed_in_existing_mapping",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category",
+      "unit_hint": "ms since Unix epoch",
+      "scale_hint": "1 (raw value; no transform)",
+      "evidence_note": "沿用现有集成已核对的字段映射；只作参考元数据，原始实体不套HA单位。"
+    },
+    {
+      "group": "seat",
+      "field": "flSeatHeatLvl",
+      "meaning_zh": "左前座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "flSeatVentLvl",
+      "meaning_zh": "左前座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "frSeatHeatLvl",
+      "meaning_zh": "右前座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "frSeatVentLvl",
+      "meaning_zh": "右前座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "seatHeatingAbortRsn",
+      "meaning_zh": "座椅加热中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "seatVentAbortRsn",
+      "meaning_zh": "座椅通风中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "slSeatHeatLvl",
+      "meaning_zh": "二排左座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "slSeatVentLvl",
+      "meaning_zh": "二排左座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "smSeatHeatLvl",
+      "meaning_zh": "二排中座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "smSeatVentLvl",
+      "meaning_zh": "二排中座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "srSeatHeatLvl",
+      "meaning_zh": "二排右座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "srSeatVentLvl",
+      "meaning_zh": "二排右座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "tlSeatHeatLvl",
+      "meaning_zh": "三排左座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "tlSeatVentLvl",
+      "meaning_zh": "三排左座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "tmSeatHeatLvl",
+      "meaning_zh": "三排中座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "tmSeatVentLvl",
+      "meaning_zh": "三排中座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "trSeatHeatLvl",
+      "meaning_zh": "三排右座椅加热原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seat",
+      "field": "trSeatVentLvl",
+      "meaning_zh": "三排右座椅通风原始级别",
+      "meaning_status": "partially_confirmed",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "seatbelt",
+      "field": "driverSbltStatus",
+      "meaning_zh": "主驾安全带状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "seatbelt",
+      "field": "frontPassengerSbltStatus",
+      "meaning_zh": "副驾安全带状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "seatbelt",
+      "field": "secondRowLeftSbltStatus",
+      "meaning_zh": "二排左安全带状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "seatbelt",
+      "field": "secondRowMidSbltStatus",
+      "meaning_zh": "二排中安全带状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "seatbelt",
+      "field": "secondRowRightSbltStatus",
+      "meaning_zh": "二排右安全带状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "sentryMode",
+      "field": "rearviewMirrorTypeSts",
+      "meaning_zh": "哨兵相关后视镜类型或模式状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "sentryMode",
+      "field": "sentryModeActiveSts",
+      "meaning_zh": "哨兵实际激活状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "sentryMode",
+      "field": "sentryModeSetSts",
+      "meaning_zh": "哨兵设置状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "steeringWheel",
+      "field": "steeringWheelHeatAbortRsn",
+      "meaning_zh": "方向盘加热中止原因原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "steeringWheel",
+      "field": "steeringWheelHeatingStatus",
+      "meaning_zh": "方向盘加热状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "existing_diagnostic",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "airbagDeployedStatus",
+      "meaning_zh": "安全气囊展开状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "bmsWarningStatus",
+      "meaning_zh": "BMS 告警状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "brakeFluidLevelLowStatus",
+      "meaning_zh": "制动液液位低告警原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "eventTime",
+      "meaning_zh": "告警事件时间原始值",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "forwardWarningStatus",
+      "meaning_zh": "前向告警原码（告警类型待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "frontLeftTireStatus",
+      "meaning_zh": "左前轮胎状态原码，参与胎压显示过滤",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "partially_confirmed",
+      "evidence": "derived_input",
+      "source": "category",
+      "known_codes": {
+        "1": "App suppresses tyre pressure display"
+      },
+      "evidence_note": "现有App代码在原码1时隐藏胎压；不能据此断言具体轮胎故障类型。"
+    },
+    {
+      "group": "warning",
+      "field": "frontRightTireStatus",
+      "meaning_zh": "右前轮胎状态原码，参与胎压显示过滤",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "partially_confirmed",
+      "evidence": "derived_input",
+      "source": "category",
+      "known_codes": {
+        "1": "App suppresses tyre pressure display"
+      },
+      "evidence_note": "现有App代码在原码1时隐藏胎压；不能据此断言具体轮胎故障类型。"
+    },
+    {
+      "group": "warning",
+      "field": "leftWarningStatus",
+      "meaning_zh": "左侧告警原码（告警类型待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "lowWiperFluidStatus",
+      "meaning_zh": "玻璃清洗液不足告警原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "rearLeftTireStatus",
+      "meaning_zh": "左后轮胎状态原码，参与胎压显示过滤",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "partially_confirmed",
+      "evidence": "derived_input",
+      "source": "category",
+      "known_codes": {
+        "1": "App suppresses tyre pressure display"
+      },
+      "evidence_note": "现有App代码在原码1时隐藏胎压；不能据此断言具体轮胎故障类型。"
+    },
+    {
+      "group": "warning",
+      "field": "rearRightTireStatus",
+      "meaning_zh": "右后轮胎状态原码，参与胎压显示过滤",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "partially_confirmed",
+      "evidence": "derived_input",
+      "source": "category",
+      "known_codes": {
+        "1": "App suppresses tyre pressure display"
+      },
+      "evidence_note": "现有App代码在原码1时隐藏胎压；不能据此断言具体轮胎故障类型。"
+    },
+    {
+      "group": "warning",
+      "field": "rightWarningStatus",
+      "meaning_zh": "右侧告警原码（告警类型待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "samStaWarningStatus",
+      "meaning_zh": "SAM 状态告警原码（SAM含义待核对）",
+      "meaning_status": "unknown",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "warning",
+      "field": "securityAlarmTriggeredStatus",
+      "meaning_zh": "防盗报警触发状态原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "window",
+      "field": "flWndOpenSts",
+      "meaning_zh": "左前车窗开启状态原码（不同于已展示的开度百分比）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "window",
+      "field": "frWndOpenSts",
+      "meaning_zh": "右前车窗开启状态原码（不同于已展示的开度百分比）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "window",
+      "field": "rlWndOpenSts",
+      "meaning_zh": "左后车窗开启状态原码（不同于已展示的开度百分比）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "window",
+      "field": "rrWndOpenSts",
+      "meaning_zh": "右后车窗开启状态原码（不同于已展示的开度百分比）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "model_only",
+      "source": "category"
+    },
+    {
+      "group": "wiper",
+      "field": "frontWiperModeStatus",
+      "meaning_zh": "前雨刷工作模式原码",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    },
+    {
+      "group": "wrlsChrg",
+      "field": "wrlsChrgrAuxFnDetResult",
+      "meaning_zh": "无线充电辅助功能检测结果原码（检测对象待核对）",
+      "meaning_status": "inferred_from_name",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category"
+    }
+  ]
+}

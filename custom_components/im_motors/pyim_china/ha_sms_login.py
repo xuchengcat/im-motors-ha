@@ -237,6 +237,7 @@ class HaSmsLogin:
                 "baseline_headers": dict(context.baseline_headers), "access_token": result.access_token,
                 "refresh_token": result.refresh_token, "expiration_time": result.expiration_time,
                 "suggest_refresh_time": result.suggest_refresh_time,
+                "user_account_id": result.uid,
                 "last_login_attempt": state["attempt_id"]})
         for name in ("ha-metadata.imvault", "ha-telemetry.imvault", "ha-fault.imvault"):
             (self.data_dir / name).unlink(missing_ok=True)

@@ -79,6 +79,9 @@ async def hass(tmp_path):
     shutil.copytree(ROOT / "custom_components", config / "custom_components",
                     ignore=shutil.ignore_patterns("__pycache__"))
     instance = HomeAssistant(str(config))
+    # Dependencies are supplied by the test environment. Never invoke an
+    # installer (or network access) from HA while loading this integration.
+    instance.config.skip_pip = True
     loader_setup(instance)
     frame_setup(instance)
     instance.config_entries = ConfigEntries(instance, {})

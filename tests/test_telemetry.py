@@ -67,6 +67,20 @@ def test_missing_null_unknown_and_invalid_never_default_to_zero():
     assert result["charge_status_raw"] == 99
 
 
+@pytest.mark.parametrize("period,expected", [
+    ({}, None), ({"bmsPackSOH": None}, None), ({"bmsPackSOH": 0}, 0),
+    ({"bmsPackSOH": 100}, 100), ({"bmsPackSOH": 97.35}, 97.35),
+    ({"bmsPackSOH": -1}, None), ({"bmsPackSOH": 101}, None),
+    ({"bmsPackSOH": 65535}, None), ({"bmsPackSOH": 9735}, None),
+])
+def test_battery_health_preserves_percentage_and_rejects_unconfirmed_scaling(period, expected):
+    result = snapshot({"period": {"originalBmsPackSOCDsp": 80, **period}})
+    assert normalized(result, SENSORS["battery_health"]) == expected
+    assert normalized(result, SENSORS["soc"]) == 80
+    assert SENSORS["battery_health"].unit == "%"
+    assert not SENSORS["battery_health"].diagnostic
+
+
 @pytest.mark.parametrize("status", range(17))
 def test_charging_duration_power_gated_by_explicit_charging_modes(status):
     result = values(snapshot({"hvBattery": {"bmsChargeStatus": status},

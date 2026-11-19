@@ -1,3 +1,66 @@
+vehicle_control:
+  name: 车辆控制（全功能模式）
+  description: 发送一次真实车控指令；仅全功能且接受风险后可用。返回 accepted 只代表服务器受理，须自行确认车辆实际状态。超时不自动重发。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+    vehicle_id:
+      description: 车辆哈希 ID，见车控状态实体或 list_controls。仅关联一辆车时可省略。
+      selector:
+        text:
+    action:
+      required: true
+      example: open_trunk
+      selector:
+        select:
+          options:
+            - lock
+            - unlock
+            - open_trunk
+            - close_trunk
+            - unlock_trunk
+            - open_windows
+            - close_windows
+            - vent_windows
+            - find_car
+            - stop_find_car
+            - open_bonnet
+            - close_bonnet
+            - open_charge_port
+            - start_charge
+            - stop_charge
+            - battery_warm_on
+            - battery_warm_off
+            - ac_on
+            - ac_off
+            - ac_temperature
+            - seat_heat
+            - seat_vent
+            - steering_heat
+            - charge_target
+            - charge_current
+            - schedule_charge
+            - cancel_schedule_charge
+            - sentry_on
+            - sentry_off
+    parameters:
+      description: 按动作填写参数；无参数的动作留空。完整字段与范围见 docs/vehicle-control.md。
+      example: '{"percent": 80}'
+      selector:
+        object:
+list_controls:
+  name: 列出车控能力
+  description: 返回关联车辆哈希 ID、当前模式和静态协议候选动作；不发送任何云端请求，不代表车型支持或实车验证通过。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+
 import_trip_history:
   name: 导入历史行程
   description: 将手机整理后的 JSON/CSV 合并到本地历史库。不会登录智己车主账号。

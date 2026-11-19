@@ -1,6 +1,7 @@
 """Parse the prepared GET responses locally; never perform I/O.
 
-Only confirmed model fields are retained. Missing, null and zero stay distinct.
+Typed model fields and allowlisted raw developer signals are retained.
+Missing, null and zero stay distinct.
 Values and server messages are excluded from repr/error text. This parser does
 not validate server authenticity, vehicle ownership, no-wake behavior or units
 that have not been traced. Objects still contain private data in their fields.
@@ -14,6 +15,7 @@ from types import MappingProxyType
 from typing import Mapping
 
 from .offline_encryption import decrypted_response_body
+from .debug_fields import DEBUG_FIELDS, bounded_debug_value
 
 
 class ResponseError(ValueError):
@@ -42,6 +44,8 @@ class Presence(str, Enum):
 class ObservedField:
     presence: Presence
     value: object = None
+    raw_type: str | None = None
+    validation: str | None = None
 
     def __repr__(self):
         return f"ObservedField({self.presence.value}, <redacted>)"
@@ -87,6 +91,8 @@ class CategorySnapshot:
     feature_keys: ObservedField = field(default_factory=lambda: ObservedField(Presence.MISSING))
     vin: ObservedField = field(default_factory=lambda: ObservedField(Presence.MISSING))
     location_fields: Mapping[str, ObservedField] = field(
+        default_factory=lambda: MappingProxyType({}))
+    debug_fields: Mapping[str, ObservedField] = field(
         default_factory=lambda: MappingProxyType({}))
 
     def __repr__(self):
@@ -138,7 +144,7 @@ _ROOT = {"isOnLine": int, "isConnected": int, "updateTime": int,
          "isConnectedUpdateTime": int, "onLineTime": int, "offLineTime": int,
          "offLineDisconnect": int}
 _PERIOD = {
-    "originalBmsPackSOCDsp": float, "bmsPackSOCDsp": float,
+    "originalBmsPackSOCDsp": float, "bmsPackSOCDsp": float, "bmsPackSOH": float,
     "fastCharge": str, "icbSetVehRngAlg": int, "icbVehElecRng": int,
     "icbVehFuelRng": int, "imcuVehElecRng": float, "cltcVehElecRng": int,
     "power": float, "electricPilePower": float, "chargedPower": float,
@@ -337,6 +343,7 @@ def parse_read_response(operation: str, wire_body: str, *,
         return VehicleList(Presence.VALUE, tuple(
             VehicleIdentity(_fields(_object(item), _ISC_VEHICLE)) for item in items))
     data = _object(body["data"])
+    tab_source = data if operation in ("vehicle_tab", "vehicle_refresh") else {}
     tab_metadata = MappingProxyType({})
     feature_keys = ObservedField(Presence.MISSING)
     if operation in ("vehicle_tab", "vehicle_refresh"):
@@ -368,7 +375,25 @@ def parse_read_response(operation: str, wire_body: str, *,
         for name, schema in _SECTIONS.items()})
     return CategorySnapshot(_fields(data, _ROOT), period_presence, period,
                             battery_presence, battery, sections, tab_metadata, feature_keys,
-                            _field(data, "vin", str), _location_fields(data.get("period")))
+                            _field(data, "vin", str), _location_fields(data.get("period")),
+                            _debug_fields(data, tab_source))
+
+
+def _debug_fields(category, tab):
+    """Allowlisted raw signals only; optional unknown types cannot break reads."""
+    result = {}
+    for path, spec in DEBUG_FIELDS.items():
+        container = tab if spec.source == "tab" else category
+        group = container if spec.group == "root" else container.get(spec.group)
+        if not isinstance(group, dict) or spec.field not in group:
+            result[path] = ObservedField(Presence.MISSING, validation="missing")
+        elif group[spec.field] is None:
+            result[path] = ObservedField(Presence.NULL, raw_type="NoneType", validation="null")
+        else:
+            raw = group[spec.field]
+            value, validation = bounded_debug_value(raw)
+            result[path] = ObservedField(Presence.VALUE, value, type(raw).__name__, validation)
+    return MappingProxyType(result)
 
 
 def _location_fields(period):

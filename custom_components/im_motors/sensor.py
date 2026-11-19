@@ -7,6 +7,7 @@ from homeassistant.core import callback
 
 from .const import PENDING_FIELDS
 from .entity import ImMotorsEntity, ImMotorsTelemetryEntity
+from .control import ImMotorsControlEntity
 from .telemetry import SENSORS, CHARGE_STATES
 
 PARALLEL_UPDATES = 0
@@ -35,11 +36,36 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             for key, spec in SENSORS.items())
             entities.extend(PendingSensor(coordinator, vehicle.identifier, name, index)
                             for index, name in enumerate(PENDING_FIELDS))
+            if coordinator.control_enabled:
+                entities.append(ImMotorsControlStatus(coordinator, vehicle.identifier))
         if entities:
             async_add_entities(entities)
 
     add_vehicles()
     entry.async_on_unload(coordinator.async_add_listener(add_vehicles))
+
+
+class ImMotorsControlStatus(ImMotorsControlEntity, SensorEntity):
+    _attr_name = "车控状态"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator, vehicle_id):
+        super().__init__(coordinator, vehicle_id, "control_status")
+
+    @property
+    def native_value(self):
+        if not self.coordinator.available_actions(self.vehicle_id):
+            return "协议能力未知"
+        result = self.coordinator.control_results.get(self.vehicle_id, {})
+        return {"accepted": "服务器已受理，执行待确认", "failed_or_unknown": "失败或结果不明",
+                "pending": "结果不明，请检查车辆", "unknown": "结果不明，请检查车辆",
+                "rejected": "服务器拒绝", "reviewed": "已人工排查", "cancelled": "已取消"}.get(result.get("status"), "等待操作")
+
+    @property
+    def extra_state_attributes(self):
+        return {**super().extra_state_attributes,
+                "supported_actions": list(self.coordinator.available_actions(self.vehicle_id)),
+                "vehicle_id": self.vehicle_id}
 
 
 class ImMotorsSensor(ImMotorsEntity, SensorEntity):
@@ -92,12 +118,16 @@ class ImMotorsTelemetrySensor(ImMotorsTelemetryEntity, SensorEntity):
     def __init__(self, coordinator, vehicle_id, key, spec):
         super().__init__(coordinator, vehicle_id, key, spec)
         self._attr_native_unit_of_measurement = spec.unit
+        if spec.debug:
+            self._attr_icon = "mdi:code-json"
         if spec.unit and not spec.diagnostic:
             self._attr_state_class = SensorStateClass.MEASUREMENT
         if key == "odometer":
             self._attr_state_class = SensorStateClass.TOTAL
             self._attr_suggested_display_precision = 0
             self._attr_icon = "mdi:counter"
+        if key == "battery_health":
+            self._attr_icon = "mdi:battery-heart-variant"
         if key == "charge_status":
             self._attr_device_class = SensorDeviceClass.ENUM
             self._attr_translation_key = key

@@ -75,6 +75,7 @@ class SmsLoginResult:
     refresh_token: str
     expiration_time: int
     suggest_refresh_time: int
+    uid: str = ""
 
     def __repr__(self):
         return "SmsLoginResult(<redacted>)"
@@ -221,7 +222,10 @@ def parse_sms_login(body, *, headers=None, encrypt_key=None):
     suggestion = parse_millisecond_time(data, "suggestRefreshTime")
     if expiry < 0 or suggestion < 0 or (expiry and suggestion and suggestion >= expiry):
         raise ResponseError("Invalid login time metadata")
-    return SmsLoginResult(token, refresh, expiry, suggestion)
+    uid = login_field("uid", str) or ""
+    if uid:
+        _secret(uid)
+    return SmsLoginResult(token, refresh, expiry, suggestion, uid)
 
 
 class SmsLoginSession:

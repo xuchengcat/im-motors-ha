@@ -1,10 +1,11 @@
-"""Confirmed, read-only mappings. Unknown codes/units never acquire defaults."""
+"""Normalized telemetry and explicitly labelled raw developer signals."""
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import math
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from .pyim_china.debug_fields import DEBUG_FIELDS
 
 
 @dataclass(frozen=True)
@@ -16,10 +17,12 @@ class FieldSpec:
     device_class: object = None
     conversion: str = "raw"
     diagnostic: bool = False
+    debug: bool = False
 
 
 SENSORS = {
     "soc": FieldSpec("电量", "period", "originalBmsPackSOCDsp", "%", SensorDeviceClass.BATTERY, "percent"),
+    "battery_health": FieldSpec("电池健康度", "period", "bmsPackSOH", "%", conversion="percent"),
     "soc_secondary": FieldSpec("电量（BMS 显示字段）", "period", "bmsPackSOCDsp", "%", SensorDeviceClass.BATTERY, "percent", True),
     "cltc_range": FieldSpec("CLTC 续航", "period", "cltcVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
     "estimated_range": FieldSpec("估算续航", "period", "imcuVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
@@ -72,6 +75,14 @@ for prefix, label in (("fl", "左前"), ("fr", "右前"), ("sl", "二排左"), (
     for suffix, name in (("SeatHeatLvl", "加热"), ("SeatVentLvl", "通风")):
         SENSORS[prefix + "_" + suffix] = FieldSpec(label + "座椅" + name + "原始级别", "seat", prefix + suffix, diagnostic=True)
 
+# Keep existing raw entity keys/unique IDs when expanding the developer view.
+_raw_keys = {spec.group + "." + spec.field: key for key, spec in SENSORS.items()
+             if spec.diagnostic and key not in ("vehicle_updated", "vehicle_series", "tab_project_code")}
+for _path, _definition in DEBUG_FIELDS.items():
+    _key = _raw_keys.get(_path, "other_" + _path.replace(".", "_"))
+    SENSORS[_key] = FieldSpec("Other / " + _path, "debug", _path,
+                             diagnostic=True, debug=True)
+
 CHARGE_STATES = (
     "none", "on_board_charging", "charge_done", "balancing", "charge_fault",
     "connecting", "connected_not_recognized", "connected_not_charged", "charge_cease",
@@ -87,6 +98,8 @@ def observed(snapshot, group, name):
         return None
     if group in ("root", "period", "hvBattery"):
         fields = getattr(snapshot, {"hvBattery": "battery"}.get(group, group))
+    elif group == "debug":
+        fields = snapshot.debug_fields
     else:
         section = snapshot.sections.get(group) or snapshot.tab_metadata.get(group)
         fields = section.fields if section else {}

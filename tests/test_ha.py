@@ -31,11 +31,12 @@ def telemetry_response(account):
     account["transport"].send.side_effect = send
 
 
-async def create_entry(hass, account, *, options=None):
+async def create_entry(hass, account, *, options=None, access_mode="read_only"):
     flow = ImMotorsConfigFlow()
     flow.hass = hass
     flow.context = {"source": "user"}
-    result = await flow.async_step_user({"data_dir": str(account["data"]), "key_file": str(account["key"])})
+    result = await flow.async_step_user({"data_dir": str(account["data"]), "key_file": str(account["key"]),
+        "access_mode": access_mode, "accept_control_risk": access_mode == "full"})
     assert result["type"] == "create_entry"
     return config_entries.ConfigEntry(version=1, minor_version=1, domain=DOMAIN,
         title=result["title"], data=result["data"], source="user", unique_id=flow.unique_id,
@@ -48,7 +49,7 @@ async def test_flow_offline_and_invalid_paths(hass, account):
     form = await flow.async_step_user({"data_dir": "relative", "key_file": "missing"})
     assert form["errors"]["base"] == "invalid_vault"
     entry = await create_entry(hass, account)
-    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes"}
+    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk"}
     assert "SYNTHETIC" not in repr(dict(entry.data))
     account["transport"].send.assert_not_called()
 
@@ -60,7 +61,7 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
         await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.LOADED
     states = [state for state in hass.states.async_all() if state.entity_id.startswith(("sensor.", "binary_sensor."))]
-    enabled = sum(not spec.diagnostic or key in ("vehicle_updated", "vehicle_series", "tab_project_code")
+    enabled = sum(not spec.diagnostic or spec.debug or key in ("vehicle_updated", "vehicle_series", "tab_project_code")
                   for key, spec in SENSORS.items()) + len(BINARY_SENSORS)
     assert len(states) == 7 + enabled
     assert any(state.state == "已接入" for state in states)

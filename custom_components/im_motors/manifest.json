@@ -1,6 +1,6 @@
 {
   "domain": "im_motors",
-  "name": "智己汽车（只读）",
+  "name": "智己汽车",
   "codeowners": [
     "@xuchengcat"
   ],
@@ -12,7 +12,7 @@
   "requirements": [
     "pycryptodome==3.24.0"
   ],
-  "version": "0.6.2",
+  "version": "0.7.0",
   "after_dependencies": [
     "frontend",
     "http",
