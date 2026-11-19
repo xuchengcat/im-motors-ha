@@ -93,9 +93,6 @@ async def test_all_other_entities_enabled_labelled_defined_and_no_extra_http(has
     other_label = next(label.label_id for label in lr.async_get(hass).labels.values() if label.name == "其他")
     for entity in entries:
         assert other_label in entity.labels
-        if entity.unique_id.endswith("_battery_health"):
-            assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
-            continue
         assert entity.disabled_by is None
         state = hass.states.get(entity.entity_id)
         assert state.attributes["category"] == "其他"

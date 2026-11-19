@@ -926,8 +926,8 @@
       "enum_status": "unverified",
       "evidence": "historical_response",
       "source": "category",
-      "enabled_by_default": false,
-      "evidence_note": "历史曾返回94.0、93.9，但这不能证明其单位是百分比或含义是电池健康度。仅保留原始值供人工核对，默认禁用。"
+      "enabled_by_default": true,
+      "evidence_note": "历史曾返回94.0、93.9，但这不能证明其单位是百分比或含义是电池健康度。仅以Other原始字段展示供人工核对，不添加单位或缩放。"
     },
     {
       "group": "period",

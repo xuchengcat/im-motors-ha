@@ -79,7 +79,7 @@ def test_soh_keeps_unverified_raw_values_without_percentage(period, expected):
     assert normalized(result, SENSORS["soc"]) == 80
     assert SENSORS["battery_health"].unit is None
     assert SENSORS["battery_health"].diagnostic
-    assert not SENSORS["battery_health"].enabled_by_default
+    assert SENSORS["battery_health"].enabled_by_default
 
 
 @pytest.mark.parametrize("status", range(17))

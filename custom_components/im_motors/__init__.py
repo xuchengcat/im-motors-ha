@@ -32,10 +32,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     debug_ids = {f"{entry.entry_id}_{vehicle.identifier}_{key}"
                  for vehicle in coordinator.data.vehicles
                  for key, spec in SENSORS.items() if spec.debug}
-    disabled_defaults = {f"{entry.entry_id}_{vehicle.identifier}_{key}": spec.name
+    raw_migrations = {f"{entry.entry_id}_{vehicle.identifier}_{key}": spec.name
                         for vehicle in coordinator.data.vehicles
-                        for key, spec in SENSORS.items() if spec.debug and not spec.enabled_by_default}
-    enabled_ids = (debug_ids - disabled_defaults.keys()) | {f"{entry.entry_id}_{vehicle.identifier}_{key}"
+                        for key, spec in SENSORS.items() if spec.debug and spec.field == "period.bmsPackSOH"}
+    enabled_ids = debug_ids | {f"{entry.entry_id}_{vehicle.identifier}_{key}"
                  for vehicle in coordinator.data.vehicles
                  for key, spec in {**SENSORS, **BINARY_SENSORS}.items()
                  if coordinator.control_enabled and spec.diagnostic and spec.enabled_by_default}
@@ -43,11 +43,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # registry. Enabling them afterwards schedules a delayed entry reload on
     # older HA versions and leaves restored states temporarily unavailable.
     for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
-        if entity.unique_id in disabled_defaults and entity.original_name != disabled_defaults[entity.unique_id]:
-            # Correct the former health/% entity once. Subsequent user enabling
-            # of the renamed raw signal must survive reloads and restarts.
-            registry.async_update_entity(entity.entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION,
-                original_name=disabled_defaults[entity.unique_id], unit_of_measurement=None)
+        if entity.unique_id in raw_migrations and (
+                entity.original_name != raw_migrations[entity.unique_id] or entity.unit_of_measurement is not None):
+            # Correct the earlier health/% interpretation while preserving ID
+            # and explicit user disabling. Integration defaults may be enabled below.
+            registry.async_update_entity(entity.entity_id,
+                original_name=raw_migrations[entity.unique_id], unit_of_measurement=None)
         if entity.unique_id in enabled_ids and entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION:
             registry.async_update_entity(entity.entity_id, disabled_by=None)
         if entity.unique_id in debug_ids:
