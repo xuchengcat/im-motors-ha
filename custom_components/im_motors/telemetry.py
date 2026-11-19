@@ -18,11 +18,11 @@ class FieldSpec:
     conversion: str = "raw"
     diagnostic: bool = False
     debug: bool = False
+    enabled_by_default: bool = True
 
 
 SENSORS = {
     "soc": FieldSpec("电量", "period", "originalBmsPackSOCDsp", "%", SensorDeviceClass.BATTERY, "percent"),
-    "battery_health": FieldSpec("电池健康度", "period", "bmsPackSOH", "%", conversion="percent"),
     "soc_secondary": FieldSpec("电量（BMS 显示字段）", "period", "bmsPackSOCDsp", "%", SensorDeviceClass.BATTERY, "percent", True),
     "cltc_range": FieldSpec("CLTC 续航", "period", "cltcVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
     "estimated_range": FieldSpec("估算续航", "period", "imcuVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
@@ -78,10 +78,12 @@ for prefix, label in (("fl", "左前"), ("fr", "右前"), ("sl", "二排左"), (
 # Keep existing raw entity keys/unique IDs when expanding the developer view.
 _raw_keys = {spec.group + "." + spec.field: key for key, spec in SENSORS.items()
              if spec.diagnostic and key not in ("vehicle_updated", "vehicle_series", "tab_project_code")}
+_raw_keys["period.bmsPackSOH"] = "battery_health"  # Preserve the earlier entity ID during correction.
 for _path, _definition in DEBUG_FIELDS.items():
     _key = _raw_keys.get(_path, "other_" + _path.replace(".", "_"))
     SENSORS[_key] = FieldSpec("Other / " + _path, "debug", _path,
-                             diagnostic=True, debug=True)
+                             diagnostic=True, debug=True,
+                             enabled_by_default=_definition.enabled_by_default)
 
 CHARGE_STATES = (
     "none", "on_board_charging", "charge_done", "balancing", "charge_fault",

@@ -21,6 +21,7 @@ class DebugField:
     scale_hint: str | None = None
     known_codes: dict | None = None
     evidence_note: str | None = None
+    enabled_by_default: bool = True
 
     @property
     def path(self):

@@ -144,7 +144,7 @@ _ROOT = {"isOnLine": int, "isConnected": int, "updateTime": int,
          "isConnectedUpdateTime": int, "onLineTime": int, "offLineTime": int,
          "offLineDisconnect": int}
 _PERIOD = {
-    "originalBmsPackSOCDsp": float, "bmsPackSOCDsp": float, "bmsPackSOH": float,
+    "originalBmsPackSOCDsp": float, "bmsPackSOCDsp": float,
     "fastCharge": str, "icbSetVehRngAlg": int, "icbVehElecRng": int,
     "icbVehFuelRng": int, "imcuVehElecRng": float, "cltcVehElecRng": int,
     "power": float, "electricPilePower": float, "chargedPower": float,

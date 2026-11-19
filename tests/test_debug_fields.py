@@ -21,7 +21,7 @@ def parsed(category, **tab):
 
 
 def test_entire_catalog_roundtrips_without_scaling_or_automatic_enums():
-    assert len(DEBUG_FIELDS) == 172
+    assert len(DEBUG_FIELDS) == 173
     specs = {s.field: s for s in SENSORS.values() if s.debug}
     assert set(specs) == set(DEBUG_FIELDS)
     assert all(s.diagnostic and s.unit is None and s.device_class is None for s in specs.values())
@@ -89,11 +89,14 @@ async def test_all_other_entities_enabled_labelled_defined_and_no_extra_http(has
     vehicle_id = hashlib.sha256(VIN.encode()).hexdigest()
     unique_ids = {f"{entry.entry_id}_{vehicle_id}_{key}" for key in debug_keys}
     entries = [e for e in er.async_get(hass).entities.values() if e.unique_id in unique_ids]
-    assert len(entries) == 172
+    assert len(entries) == 173
     other_label = next(label.label_id for label in lr.async_get(hass).labels.values() if label.name == "其他")
     for entity in entries:
-        assert entity.disabled_by is None
         assert other_label in entity.labels
+        if entity.unique_id.endswith("_battery_health"):
+            assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+            continue
+        assert entity.disabled_by is None
         state = hass.states.get(entity.entity_id)
         assert state.attributes["category"] == "其他"
         assert state.attributes["meaning_zh"]
@@ -103,7 +106,8 @@ async def test_all_other_entities_enabled_labelled_defined_and_no_extra_http(has
         assert "device_class" not in state.attributes
         assert VIN not in repr(state.as_dict())
     voltage = next(hass.states.get(e.entity_id) for e in entries
-                   if hass.states.get(e.entity_id).attributes["source_field"] == "period.bmsPackVol")
+                   if hass.states.get(e.entity_id) is not None
+                   and hass.states.get(e.entity_id).attributes["source_field"] == "period.bmsPackVol")
     assert voltage.state == "392.25"
     assert voltage.attributes["raw_type"] == "float"
     assert voltage.attributes["meaning_status"] == "inferred_from_name"

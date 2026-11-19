@@ -1,33 +1,64 @@
-"""SOH is a shared read-only measurement, independent of control access."""
+"""Unverified SOH is a disabled raw Other signal, never a health percentage."""
+import hashlib
+import inspect
 from unittest.mock import patch
 import pytest
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import entity_registry as er, label_registry as lr
 from conftest import VIN, response
 from test_ha import create_entry
 
 
 @pytest.mark.parametrize("mode", ["read_only", "full"])
-async def test_health_entity_enabled_in_both_modes_and_missing_stays_unknown(hass, account, mode):
+async def test_soh_is_disabled_raw_other_and_explicit_enabling_survives_reload(hass, account, mode):
     account["transport"].send.side_effect = [response([{"vin": VIN}]),
-        response({"category": {"vin": VIN, "period": {"bmsPackSOH": 96.75}}})]
+        response({"category": {"vin": VIN, "period": {"bmsPackSOH": 9735}}})]
     entry = await create_entry(hass, account, access_mode=mode)
     with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]):
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
-    entity = next(e for e in er.async_get(hass).entities.values() if e.unique_id.endswith("_battery_health"))
-    assert entity.disabled_by is None
-    state = hass.states.get(entity.entity_id)
-    assert state.state == "96.75"
-    assert state.attributes["friendly_name"].endswith("电池健康度")
-    assert state.attributes["unit_of_measurement"] == "%"
-    assert state.attributes["state_class"] == "measurement"
-    assert "device_class" not in state.attributes  # Health differs from remaining charge.
-    assert state.attributes["source_field"] == "period.bmsPackSOH"
-    assert account["transport"].send.call_count == 2
-    account["transport"].send.side_effect = [response({"category": {"vin": VIN, "period": {}}})]
-    await entry.runtime_data.async_query_vehicle()
-    await hass.async_block_till_done()
-    assert hass.states.get(entity.entity_id).state == "unknown"
-    assert account["transport"].send.call_count == 3
-    assert all(call.args[0].method == "GET" for call in account["transport"].send.call_args_list)
+        registry = er.async_get(hass)
+        entity = next(e for e in registry.entities.values() if e.unique_id.endswith("_battery_health"))
+        assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+        assert entity.original_name == "Other / period.bmsPackSOH"
+        label = next(v.label_id for v in lr.async_get(hass).labels.values() if v.name == "其他")
+        assert label in entity.labels
+        assert hass.states.get(entity.entity_id) is None
+        registry.async_update_entity(entity.entity_id, disabled_by=None)
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+        state = hass.states.get(entity.entity_id)
+        assert state.state == "9735"  # Raw value, without a 0..100 percentage filter.
+        assert state.attributes["friendly_name"].endswith("Other / period.bmsPackSOH")
+        assert "unit_of_measurement" not in state.attributes
+        assert "state_class" not in state.attributes
+        assert "device_class" not in state.attributes
+        assert state.attributes["meaning_status"] == "unknown"
+        assert state.attributes["source_field"] == "period.bmsPackSOH"
+        assert registry.async_get(entity.entity_id).disabled_by is None
+        assert account["transport"].send.call_count == 2
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("mode", ["read_only", "full"])
+async def test_former_health_entity_migrates_to_disabled_raw_without_new_id(hass, account, mode):
+    account["transport"].send.side_effect = [response([{"vin": VIN}]), response({"category": {"vin": VIN}})]
+    entry = await create_entry(hass, account, access_mode=mode)
+    with patch.object(hass.config_entries, "async_setup", return_value=True):
+        await hass.config_entries.async_add(entry)
+    registry = er.async_get(hass)
+    parameters = inspect.unwrap(registry.async_get_or_create).__code__.co_varnames
+    kwargs = {"config_entry": entry} if "config_entry" in parameters else {"config_entry_id": entry.entry_id}
+    vehicle_id = hashlib.sha256(VIN.encode()).hexdigest()
+    old = registry.async_get_or_create("sensor", "im_motors", f"{entry.entry_id}_{vehicle_id}_battery_health",
+        **kwargs, original_name="电池健康度", unit_of_measurement="%")
+    with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    migrated = registry.async_get(old.entity_id)
+    assert migrated.unique_id == old.unique_id
+    assert migrated.original_name == "Other / period.bmsPackSOH"
+    assert migrated.unit_of_measurement is None
+    assert migrated.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+    assert hass.states.get(old.entity_id) is None
+    assert len([e for e in registry.entities.values() if e.unique_id == old.unique_id]) == 1
     assert await hass.config_entries.async_unload(entry.entry_id)

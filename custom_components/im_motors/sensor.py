@@ -126,8 +126,6 @@ class ImMotorsTelemetrySensor(ImMotorsTelemetryEntity, SensorEntity):
             self._attr_state_class = SensorStateClass.TOTAL
             self._attr_suggested_display_precision = 0
             self._attr_icon = "mdi:counter"
-        if key == "battery_health":
-            self._attr_icon = "mdi:battery-heart-variant"
         if key == "charge_status":
             self._attr_device_class = SensorDeviceClass.ENUM
             self._attr_translation_key = key

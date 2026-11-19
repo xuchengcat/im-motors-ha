@@ -919,6 +919,18 @@
     },
     {
       "group": "period",
+      "field": "bmsPackSOH",
+      "meaning_zh": "原始 bmsPackSOH 字段；含义存疑，不能确认为电池健康度",
+      "meaning_status": "unknown",
+      "unit_status": "unverified",
+      "enum_status": "unverified",
+      "evidence": "historical_response",
+      "source": "category",
+      "enabled_by_default": false,
+      "evidence_note": "历史曾返回94.0、93.9，但这不能证明其单位是百分比或含义是电池健康度。仅保留原始值供人工核对，默认禁用。"
+    },
+    {
+      "group": "period",
       "field": "bmsPackVol",
       "meaning_zh": "动力电池包电压原始值",
       "meaning_status": "inferred_from_name",

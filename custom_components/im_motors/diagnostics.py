@@ -13,7 +13,8 @@ async def async_get_config_entry_diagnostics(hass, entry):
     trips = getattr(coordinator, "trips", None)
     return {"integration_version": INTEGRATION_VERSION, "vehicle_telemetry_enabled": True,
             "raw_debug_field_count": len(DEBUG_FIELDS),
-            "raw_debug_fields_enabled_by_default": True,
+            "raw_debug_fields_enabled_by_default": all(spec.enabled_by_default for spec in DEBUG_FIELDS.values()),
+            "raw_debug_fields_default_enabled_count": sum(spec.enabled_by_default for spec in DEBUG_FIELDS.values()),
             "vehicle_control_enabled": bool(coordinator and coordinator.control_enabled),
             "vehicle_control_execution_verified": False,
             "last_update_success": bool(coordinator and coordinator.last_update_success),

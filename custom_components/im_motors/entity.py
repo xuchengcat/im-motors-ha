@@ -48,8 +48,9 @@ class ImMotorsTelemetryEntity(ImMotorsEntity):
         self.spec = spec
         self._attr_name = spec.name
         self._attr_device_class = spec.device_class
-        self._attr_entity_registry_enabled_default = not spec.diagnostic or key in (
-            "vehicle_updated", "vehicle_series", "tab_project_code") or spec.debug or coordinator.control_enabled
+        self._attr_entity_registry_enabled_default = spec.enabled_by_default and (
+            not spec.diagnostic or key in ("vehicle_updated", "vehicle_series", "tab_project_code")
+            or spec.debug or coordinator.control_enabled)
         if spec.diagnostic:
             from homeassistant.const import EntityCategory
             self._attr_entity_category = EntityCategory.DIAGNOSTIC

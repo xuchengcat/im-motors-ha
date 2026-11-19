@@ -61,7 +61,7 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
         await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.LOADED
     states = [state for state in hass.states.async_all() if state.entity_id.startswith(("sensor.", "binary_sensor."))]
-    enabled = sum(not spec.diagnostic or spec.debug or key in ("vehicle_updated", "vehicle_series", "tab_project_code")
+    enabled = sum(spec.enabled_by_default and (not spec.diagnostic or spec.debug or key in ("vehicle_updated", "vehicle_series", "tab_project_code"))
                   for key, spec in SENSORS.items()) + len(BINARY_SENSORS)
     assert len(states) == 7 + enabled
     assert any(state.state == "已接入" for state in states)
