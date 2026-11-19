@@ -72,6 +72,8 @@ def test_fresh_sms_login_preserves_identity_and_encrypted_session(account):
     assert send["phoneNumber"] == PHONE
     assert login["phoneNumber"] == PHONE and login["smsCode"] == CODE
     assert login["smsStateCode"] == "SYNTHETIC-STATE"
+    assert login["clientType"] == "WXAPP"
+    assert session["client_type"] == "WXAPP"
     assert hashlib.sha256(login["deviceID"].encode()).hexdigest() == identity
     assert all(call.kwargs == {"enable_sms_login": True} for call in account["factory"].call_args_list)
 
@@ -277,7 +279,7 @@ async def test_managed_sms_flow_creates_paths_only_and_loads_entities(hass, acco
         assert menu["type"] == "menu"
         form = await hass.config_entries.flow.async_configure(menu["flow_id"], {"next_step_id": "sms"})
         assert form["step_id"] == "sms"
-        assert {str(key) for key in form["data_schema"].schema} == {"phone", "telemetry_interval_minutes", "access_mode", "accept_control_risk"}
+        assert {str(key) for key in form["data_schema"].schema} == {"phone", "telemetry_interval_minutes", "access_mode", "accept_control_risk", "account_type"}
         form = await hass.config_entries.flow.async_configure(form["flow_id"], {"phone": PHONE, "telemetry_interval_minutes": 15})
         assert form["step_id"] == "sms_code"
         bad = await hass.config_entries.flow.async_configure(form["flow_id"], {"code": "abc", "resend_code": False})
@@ -288,7 +290,7 @@ async def test_managed_sms_flow_creates_paths_only_and_loads_entities(hass, acco
     assert result["type"] == "create_entry"
     entry = result["result"]
     assert entry.state is ConfigEntryState.LOADED
-    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk"}
+    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk", "account_type"}
     assert entry.data["telemetry_interval_minutes"] == 15
     assert PHONE not in str(entry.as_dict()) and CODE not in str(entry.as_dict())
     assert account["transport"].send.call_count == 4
@@ -316,7 +318,7 @@ async def test_sms_reauth_retains_entry_and_device_identity(hass, account):
         await hass.async_block_till_done()
     assert result["reason"] == "reauth_successful"
     assert account["client"].validate() == entry.unique_id
-    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk"}
+    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk", "account_type"}
 
 
 async def test_duplicate_sms_identity_aborts_before_sending(hass, account):

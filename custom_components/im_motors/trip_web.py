@@ -40,7 +40,7 @@ async def ws_entries(hass, connection, msg):
             continue
         result.append({"entry_id": entry.entry_id, "title": entry.title, "enabled": manager.enabled,
                        "amap_key_configured": bool(manager.key),
-                       "source": "ha_telemetry", "interval_minutes": manager.coordinator.telemetry_interval_minutes,
+                       "source": manager.source, "interval_minutes": manager.coordinator.telemetry_interval_minutes,
                        "trip_sample_seconds": manager.coordinator.telemetry_interval_minutes * 60,
                        "vehicles": [{"id": v.identifier, "name": v.name} for v in entry.runtime_data.data.vehicles]})
     connection.send_result(msg["id"], result)
@@ -76,7 +76,9 @@ async def ws_query(hass, connection, msg):
             "pending_parking_since": (candidate.get("first") or {}).get("time") if recording.get("pending_endpoint") else None}
         status["message"] = ERRORS.get(status.get("error"), "")
         status["address_message"] = ERRORS.get(status.get("address_error"), "")
-        connection.send_result(msg["id"], {"days": days, "trips": trips, "stats": stats, "status": status})
+        calendar = (await hass.async_add_executor_job(manager.store.state, "calendar")) if manager.source == "official_cloud" else {}
+        connection.send_result(msg["id"], {"days": days, "trips": trips, "stats": stats, "status": status,
+            "source": manager.source, "calendar": calendar})
     except TripError as error:
         connection.send_error(msg["id"], error.code, ERRORS.get(error.code, "行程查询不可用。"))
 
@@ -100,13 +102,15 @@ async def ws_detail(hass, connection, msg):
 
 @websocket_api.websocket_command({vol.Required("type"): "im_motors/trips/sync",
     vol.Required("entry_id"): str,
-    vol.Optional("geocode_only", default=False): bool})
+    vol.Optional("geocode_only", default=False): bool,
+    vol.Optional("start_date"): str, vol.Optional("end_date"): str})
 @websocket_api.async_response
 async def ws_sync(hass, connection, msg):
     require_admin(connection)
     try:
         manager = manager_for(hass, msg["entry_id"])
-        started = manager.start(geocode_only=msg["geocode_only"])
+        date_args = {key: msg[key] for key in ("start_date", "end_date") if key in msg} if manager.source == "official_cloud" else {}
+        started = manager.start(geocode_only=msg["geocode_only"], **date_args)
         connection.send_result(msg["id"], {"started": started})
     except TripError as error:
         connection.send_error(msg["id"], error.code, ERRORS.get(error.code, "请先在集成配置中启用历史行程。"))
@@ -121,6 +125,8 @@ async def ws_import(hass, connection, msg):
     try:
         from .trip_import import parse_import
         manager = manager_for(hass, msg["entry_id"])
+        if manager.source == "official_cloud":
+            raise TripError("cloud_import_disabled")
         if not manager.enabled:
             raise TripError("history_disabled")
         if manager.task is not None:
@@ -149,12 +155,15 @@ async def async_setup_services(hass):
         try:
             manager = manager_for(hass, call.data["entry_id"])
             if call.service == "sync_trip_history":
-                manager.start(geocode_only=call.data.get("geocode_only", False))
+                date_args = {key: call.data[key] for key in ("start_date", "end_date") if key in call.data} if manager.source == "official_cloud" else {}
+                manager.start(geocode_only=call.data.get("geocode_only", False), **date_args)
                 return None
             vehicle = call.data["vehicle_id"]
             if vehicle not in {v.identifier for v in manager.coordinator.data.vehicles}:
                 raise TripError("vehicle_unavailable")
             if call.service == "import_trip_history":
+                if manager.source == "official_cloud":
+                    raise TripError("cloud_import_disabled")
                 from .trip_import import parse_import
                 if not manager.enabled or manager.task:
                     raise TripError("history_disabled_or_busy")
@@ -174,7 +183,8 @@ async def async_setup_services(hass):
     vehicle = {**entry, vol.Required("vehicle_id"): str}
     hass.services.async_register(DOMAIN, "sync_trip_history", handle,
         schema=vol.Schema({**entry,
-                           vol.Optional("geocode_only", default=False): bool}))
+                           vol.Optional("geocode_only", default=False): bool,
+                           vol.Optional("start_date"): str, vol.Optional("end_date"): str}))
     hass.services.async_register(DOMAIN, "query_trip_history", handle,
         schema=vol.Schema({**vehicle, vol.Required("start_date"): str, vol.Required("end_date"): str}),
         supports_response=SupportsResponse.ONLY)
@@ -202,5 +212,5 @@ async def async_setup_web(hass):
             "/im_motors/trips-panel.js", str(Path(__file__).with_name("frontend") / "trips-panel.js"), False)])
         await panel_custom.async_register_panel(hass, frontend_url_path="im-motors-trips",
             webcomponent_name="im-motors-trips-panel", sidebar_title="智己行程", sidebar_icon="mdi:calendar-clock",
-            module_url="/im_motors/trips-panel.js?v=0.6.2", require_admin=True)
+            module_url="/im_motors/trips-panel.js?v=cloud-calendar-2", require_admin=True)
     hass.data[key] = True

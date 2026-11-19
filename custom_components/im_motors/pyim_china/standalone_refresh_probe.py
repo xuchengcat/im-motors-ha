@@ -29,8 +29,11 @@ class StandaloneCredentials:
     baseline_headers: object
     expiration_time: int = 0
     suggest_refresh_time: int = 0
+    client_type: str = "APP"
 
     def __post_init__(self):
+        if self.client_type not in ("APP", "WXAPP"):
+            raise CredentialError("Invalid session client type")
         for value in (self.access_token, self.refresh_token, self.refresh_device_id):
             _secret(value)
         if self.access_token.lower().startswith("bearer "):
@@ -64,7 +67,8 @@ def load_session(path):
         raise CredentialError("Standalone profile must not contain a push registration")
     headers = validate_headers(state["baseline_headers"])
     return state, StandaloneCredentials(state["access_token"], state["refresh_token"],
-        headers["deviceId"], headers, state.get("expiration_time", 0), state.get("suggest_refresh_time", 0))
+        headers["deviceId"], headers, state.get("expiration_time", 0), state.get("suggest_refresh_time", 0),
+        state.get("client_type", "APP"))
 
 
 def commit_response(session_vault, result_vault, attempt, config):
@@ -72,19 +76,19 @@ def commit_response(session_vault, result_vault, attempt, config):
     session, previous = load_session(session_vault.path)
     source = StandaloneCredentials(attempt["source_access_token"], attempt["source_refresh_token"],
         attempt["source_headers"]["deviceId"], attempt["source_headers"],
-        attempt["source_expiration_time"], attempt["source_suggest_refresh_time"])
+        attempt["source_expiration_time"], attempt["source_suggest_refresh_time"], attempt.get("source_client_type", "APP"))
     updated = parse_refresh_response(source, attempt["response_body"],
         headers=attempt["response_headers"], encrypt_key=config.encrypt_key)
     unchanged = (previous.access_token == source.access_token and previous.refresh_token == source.refresh_token)
     already_saved = (previous.access_token == updated.access_token and previous.refresh_token == updated.refresh_token
                      and session.get("last_refresh_attempt_time_ms") == attempt["attempt_time_ms"])
-    if (dict(previous.baseline_headers) != attempt["source_headers"] or not (unchanged or already_saved)):
+    if (previous.client_type != source.client_type or dict(previous.baseline_headers) != attempt["source_headers"] or not (unchanged or already_saved)):
         raise CredentialError("Session changed since refresh; retained response must be reviewed")
     if updated.refresh_decision(time.time_ns() // 1_000_000) == RefreshDecision.REAUTH_REQUIRED:
         raise AuthenticationExpired("Refreshed credential metadata expired")
     session.update(status="login_accepted_refresh_verified", access_token=updated.access_token,
         refresh_token=updated.refresh_token, expiration_time=updated.expiration_time,
-        suggest_refresh_time=updated.suggest_refresh_time,
+        suggest_refresh_time=updated.suggest_refresh_time, client_type=updated.client_type,
         refresh_device_id_strategy="accepted_login_device_id",
         last_refresh_attempt_time_ms=attempt["attempt_time_ms"])
     session.pop("pending_refresh_result", None)
@@ -117,7 +121,8 @@ def refresh_once(session_path=DEFAULT_SESSION, result_path=DEFAULT_RESULT, *,
         "source_access_token": credentials.access_token, "source_refresh_token": credentials.refresh_token,
         "source_headers": dict(credentials.baseline_headers),
         "source_expiration_time": credentials.expiration_time,
-        "source_suggest_refresh_time": credentials.suggest_refresh_time}
+        "source_suggest_refresh_time": credentials.suggest_refresh_time,
+        "source_client_type": credentials.client_type}
     result_vault._save_payload(attempt)
     session["pending_refresh_result"] = str(result_vault.path.resolve())
     session_vault._save_payload(session)

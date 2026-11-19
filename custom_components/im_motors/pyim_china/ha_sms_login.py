@@ -134,7 +134,7 @@ class HaSmsLogin:
                         raise SmsLoginFailure("sms_cooldown")
                 session_path = self.data_dir / "session.imvault"
                 state = {"schema_version": 1, "kind": "ha-sms-login", "status": "send_attempted",
-                    "attempt_id": uuid.uuid4().hex, "sent_time_ms": now,
+                    "attempt_id": uuid.uuid4().hex, "sent_time_ms": now, "client_type": "WXAPP",
                     "phone_fingerprint": fingerprint,
                     "source_session_digest": hashlib.sha256(session_path.read_bytes()).hexdigest()
                         if session_path.exists() else None}
@@ -193,7 +193,8 @@ class HaSmsLogin:
                 if not 0 <= age < CHALLENGE_LIFETIME_MS:
                     raise SmsLoginFailure("code_expired")
                 request = prepare_sms_login(config, context, self.phone, code,
-                    SmsChallenge(state["sms_state_code"]), now_ms=self.clock())
+                    SmsChallenge(state["sms_state_code"]), now_ms=self.clock(),
+                    client_type=state.get("client_type", "APP"))
                 state["status"] = "login_attempted"
                 self._vault("ha-login.imvault")._save_payload(state)
                 try:
@@ -238,6 +239,7 @@ class HaSmsLogin:
                 "refresh_token": result.refresh_token, "expiration_time": result.expiration_time,
                 "suggest_refresh_time": result.suggest_refresh_time,
                 "user_account_id": result.uid,
+                "client_type": state.get("client_type", "APP"),
                 "last_login_attempt": state["attempt_id"]})
         for name in ("ha-metadata.imvault", "ha-telemetry.imvault", "ha-fault.imvault"):
             (self.data_dir / name).unlink(missing_ok=True)

@@ -135,7 +135,7 @@ def prepare_captcha(config, context, *, now_ms):
 
 
 def prepare_sms_login(config, context, phone, code, challenge: SmsChallenge, *, now_ms,
-                      risk_check=None, request_nonce=None):
+                      risk_check=None, request_nonce=None, client_type="APP"):
     _phone(phone)
     _secret(code)
     _secret(challenge.state)
@@ -145,8 +145,10 @@ def prepare_sms_login(config, context, phone, code, challenge: SmsChallenge, *, 
         for value in risk_check.values():
             _secret(value)
         risk_check = {**risk_check, "ip": None, "phone": None}
+    if client_type not in ("APP", "WXAPP"):
+        raise CredentialError("Invalid login client type")
     headers = context.baseline_headers
-    data = {"aliDeviceId": context.push_device_id or None, "clientType": "APP",
+    data = {"aliDeviceId": context.push_device_id or None, "clientType": client_type,
             "deviceID": context.login_device_id, "deviceType": "Android",
             "openid": "", "phoneManufacturer": (headers["x-brand"] + "_" + headers["x-machine-model"]).replace(" ", ""),
             "phoneNumber": phone, "smsCode": code, "smsStateCode": challenge.state,

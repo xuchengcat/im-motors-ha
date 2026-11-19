@@ -109,8 +109,8 @@ query_trip_history:
       selector:
         date:
 sync_trip_history:
-  name: 立即采样或补全地址
-  description: 使用现有账号立即查询车况并记录；也可仅补全已入库行程的高德地址。
+  name: 同步行程或补全地址
+  description: 授权账号立即读取车况并记录；主账号同步所选日期的官方历史行程，每次最多31天。也可仅补全已入库行程地址。
   fields:
     entry_id:
       required: true
@@ -121,3 +121,11 @@ sync_trip_history:
       default: false
       selector:
         boolean:
+    start_date:
+      description: 主账号同步开始日期（YYYY-MM-DD），默认今天；授权账号不使用。
+      selector:
+        date:
+    end_date:
+      description: 主账号同步结束日期（YYYY-MM-DD），默认今天。
+      selector:
+        date:

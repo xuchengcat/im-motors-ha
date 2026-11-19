@@ -104,7 +104,14 @@ class TripStore:
         validate_range(start, end)
         with self.connection() as db:
             rows = db.execute("SELECT * FROM trips WHERE vehicle=? AND day BETWEEN ? AND ? ORDER BY day DESC, trip_id", (vehicle, start, end)).fetchall()
-        return [dict(json.loads(row["payload"]), date=row["day"], source_present=bool(row["source_present"]), archived_at=row["updated"]) for row in rows]
+        result = []
+        for row in rows:
+            payload = json.loads(row["payload"])
+            if payload.get("source") == "official_cloud":
+                points = payload.pop("route_points", [])
+                payload["route_point_count"] = len(points)
+            result.append(dict(payload, date=row["day"], source_present=bool(row["source_present"]), archived_at=row["updated"]))
+        return result
 
     def stats(self, vehicle):
         with self.connection() as db:
@@ -161,6 +168,8 @@ class TripStore:
                     from zoneinfo import ZoneInfo
                     dt = dt.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
                 return dt.astimezone(timezone.utc).isoformat()
+            if trip.get("source") == "official_cloud":
+                return self.cloud_detail(trip)
             first, last = utc(trip["start_time"]), utc(trip["end_time"])
             rows = db.execute("SELECT payload FROM samples WHERE vehicle=? AND source_time>=? AND source_time<=? ORDER BY source_time", (vehicle, first, last)).fetchall()
         points = []
@@ -185,6 +194,23 @@ class TripStore:
         return {"trip": trip, "points": points, "endpoints": endpoints, "coordinate_system": "WGS-84",
                 "source_coordinate_system": "GCJ-02", "route_source": "retained_telemetry",
                 "individual_sample_times_verified": False}
+
+    @staticmethod
+    def cloud_detail(trip):
+        from .location import gcj02_to_wgs84
+        def map_point(coord):
+            if not coord:
+                return None
+            lat, lon = gcj02_to_wgs84(coord["latitude"], coord["longitude"])
+            return {"latitude": lat, "longitude": lon}
+        points = [dict(point, map_coordinates=map_point(point.get("coordinates")))
+                  for point in trip.get("route_points", [])]
+        endpoints = [{"role": prefix, "time": trip.get(prefix + "_time"),
+                      "map_coordinates": map_point(trip[prefix + "_coordinates"])}
+                     for prefix in ("start", "end") if trip.get(prefix + "_coordinates")]
+        return {"trip": trip, "points": points, "endpoints": endpoints,
+                "coordinate_system": "WGS-84", "source_coordinate_system": "GCJ-02",
+                "route_source": "official_cloud", "individual_sample_times_verified": False}
 
     def import_rows(self, vehicle, days, trips):
         updated = datetime.now().astimezone().isoformat()

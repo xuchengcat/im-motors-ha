@@ -49,7 +49,7 @@ async def test_flow_offline_and_invalid_paths(hass, account):
     form = await flow.async_step_user({"data_dir": "relative", "key_file": "missing"})
     assert form["errors"]["base"] == "invalid_vault"
     entry = await create_entry(hass, account)
-    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk"}
+    assert set(entry.data) == {"data_dir", "key_file", "telemetry_interval_minutes", "access_mode", "accept_control_risk", "account_type"}
     assert "SYNTHETIC" not in repr(dict(entry.data))
     account["transport"].send.assert_not_called()
 

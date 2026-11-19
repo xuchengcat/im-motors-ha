@@ -1,12 +1,29 @@
 """Local trip recording from existing telemetry; encrypted AMap settings."""
 import asyncio
 from datetime import datetime, timezone
+from .const import account_type, ACCOUNT_AUTHORIZED
 from .trip_api import TripError, AmapGeocoder
 from .trip_store import TripStore
 from .trip_recorder import TripRecorder, sample
 from .pyim_china.credential_store import key_context, vault_for_path
 
 ERRORS = {
+    "not_vehicle_owner": "智己返回非车主，请核对是否使用车辆主账号。",
+    "protocol_rejected": "智己拒绝日历协议校验，请更新集成或检查服务端变化。",
+    "authentication_failed": "行程认证已失效，请重新登录。",
+    "authentication_refresh_required": "请等待账号令牌刷新后再同步。",
+    "account_paused": "账号请求已暂停，请排查后恢复。",
+    "account_unavailable": "账号暂不可用，请检查认证和加密存储。",
+    "vehicle_mismatch": "行程车辆与关联车辆不一致，已停止保存。",
+    "vehicle_unavailable": "当前车辆不可用。",
+    "multiple_vehicles": "官方日历当前仅支持关联一辆车的账号，避免混淆车辆历史。",
+    "cloud_history_disabled": "请在主账号选项中启用官方历史行程查询。",
+    "cloud_date_range": "官方行程每次最多同步31天，结束日期不能晚于今天。",
+    "incomplete_day": "行程分页不完整，已保留原有历史，请稍后手动重试。",
+    "invalid_response": "行程响应无效，已保留原有历史。",
+    "business_error": "智己拒绝行程请求，请检查后手动重试。",
+    "http_error": "行程接口暂不可用，请稍后手动重试。",
+
     "amap_rejected": "高德拒绝查询，请检查 Web 服务 Key、配额和 IP 限制。",
     "amap_no_address": "高德未返回有效地址，已保留坐标。",
     "amap_invalid_response": "高德响应无效，已保留坐标。",
@@ -27,6 +44,7 @@ def settings(client, value=None):
 
 
 class TripManager:
+    source = "ha_telemetry"
     def __init__(self, hass, entry, coordinator):
         self.hass, self.entry, self.coordinator = hass, entry, coordinator
         self.store = TripStore(coordinator.client.data_dir / "trips.sqlite3")
@@ -38,7 +56,8 @@ class TripManager:
 
     @property
     def enabled(self):
-        return self.entry.options.get("trip_history_enabled", False)
+        return (account_type(self.entry) == ACCOUNT_AUTHORIZED
+                and self.entry.options.get("trip_history_enabled", False))
 
     async def setup(self):
         await self.hass.async_add_executor_job(self.store.initialize)

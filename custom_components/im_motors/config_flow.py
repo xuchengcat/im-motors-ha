@@ -9,11 +9,25 @@ from homeassistant.helpers import selector
 
 from .const import (DOMAIN, CONF_DATA_DIR, CONF_KEY_FILE, CONF_RESUME,
                     CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL, MIN_TELEMETRY_INTERVAL,
-                    CONF_ACCESS_MODE, CONF_CONTROL_RISK, MODE_READ_ONLY, MODE_FULL)
+                    CONF_ACCESS_MODE, CONF_CONTROL_RISK, MODE_READ_ONLY, MODE_FULL,
+                    CONF_ACCOUNT_TYPE, ACCOUNT_PRIMARY, ACCOUNT_AUTHORIZED, account_type)
 from .pyim_china import AccountClient, ClientFailure, LoginRequired
 from .pyim_china.ha_sms_login import HaSmsLogin, SmsLoginFailure
 from .pyim_china.managed_storage import managed_paths
 from .pyim_china.credential_store import VaultError
+
+
+def account_schema(entry=None):
+    return {vol.Required(CONF_ACCOUNT_TYPE, default=account_type(entry) if entry else ACCOUNT_AUTHORIZED):
+        selector.SelectSelector(selector.SelectSelectorConfig(
+            options=[ACCOUNT_AUTHORIZED, ACCOUNT_PRIMARY], translation_key="account_type", mode="dropdown"))}
+
+
+def account_input(data, entry=None):
+    value = data.get(CONF_ACCOUNT_TYPE, account_type(entry) if entry else ACCOUNT_AUTHORIZED)
+    if value not in (ACCOUNT_PRIMARY, ACCOUNT_AUTHORIZED):
+        raise vol.Invalid("invalid_account_type")
+    return {CONF_ACCOUNT_TYPE: value}
 
 
 def access_schema(entry=None):
@@ -59,7 +73,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
     _paths = None
 
     def _sync_interval_option(self, entry, data):
-        updates = {key: data[key] for key in (CONF_TELEMETRY_INTERVAL,)
+        updates = {key: data[key] for key in (CONF_TELEMETRY_INTERVAL, CONF_ACCOUNT_TYPE)
                    if key in entry.options and key in data}
         if updates:
             self.hass.config_entries.async_update_entry(entry, options={**entry.options, **updates})
@@ -84,6 +98,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_KEY_FILE, default=defaults.get(CONF_KEY_FILE, "/run/secrets/im_vault_key")): str,
             **self._interval_schema(),
             **access_schema(entry),
+            **account_schema(entry),
         })
 
     def _interval_schema(self):
@@ -109,7 +124,8 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
-                access = access_input(user_input, self._login_entry())
+                access = {**access_input(user_input, self._login_entry()),
+                          **account_input(user_input, self._login_entry())}
             except vol.Invalid as error:
                 return self.async_show_form(step_id="import", data_schema=self._path_schema(),
                     errors={"base": str(error)})
@@ -141,10 +157,11 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             try:
-                access = access_input(user_input, self._login_entry())
+                access = {**access_input(user_input, self._login_entry()),
+                          **account_input(user_input, self._login_entry())}
             except vol.Invalid as error:
                 schema = vol.Schema({vol.Required("phone"): str, **self._interval_schema(),
-                                     **access_schema(self._login_entry())})
+                                     **access_schema(self._login_entry()), **account_schema(self._login_entry())})
                 return self.async_show_form(step_id="sms", data_schema=schema, errors={"base": str(error)})
             try:
                 interval = self._interval(user_input)
@@ -185,7 +202,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
                         return await self._finish_login()
                     return await self.async_step_sms_code()
         schema = vol.Schema({vol.Required("phone"): str, **self._interval_schema(),
-                             **access_schema(self._login_entry())})
+                             **access_schema(self._login_entry()), **account_schema(self._login_entry())})
         return self.async_show_form(step_id="sms", data_schema=schema, errors=errors)
 
     async def async_step_sms_code(self, user_input=None):
@@ -243,6 +260,7 @@ class ImMotorsConfigFlow(ConfigFlow, domain=DOMAIN):
             data = {key: user_input[key] for key in (CONF_DATA_DIR, CONF_KEY_FILE)}
             try:
                 data.update(access_input(user_input, entry))
+                data.update(account_input(user_input, entry))
             except vol.Invalid as error:
                 return self.async_show_form(step_id="paths", data_schema=schema, errors={"base": str(error)})
             try:
@@ -275,6 +293,7 @@ class ImMotorsOptionsFlow(OptionsFlow):
         if user_input is not None:
             try:
                 access = access_input(user_input, entry)
+                account = account_input(user_input, entry)
             except vol.Invalid as error:
                 errors["base"] = str(error)
             key = user_input.get("amap_api_key", "").strip()
@@ -296,13 +315,19 @@ class ImMotorsOptionsFlow(OptionsFlow):
                     return self.async_create_entry(title="", data={
                         **{key: value for key, value in entry.options.items()
                            if key not in (CONF_ACCESS_MODE, CONF_CONTROL_RISK)},
-                        "trip_history_enabled": user_input["trip_history_enabled"],
+                        **account,
+                        "trip_history_enabled": user_input["trip_history_enabled"]
+                            and account[CONF_ACCOUNT_TYPE] == ACCOUNT_AUTHORIZED,
+                        "cloud_trip_history_enabled": user_input.get("cloud_trip_history_enabled", False)
+                            and account[CONF_ACCOUNT_TYPE] == ACCOUNT_PRIMARY,
                         CONF_TELEMETRY_INTERVAL: interval,
                         "amap_key_configured": bool(saved.get("amap_api_key")),
                     })
         schema = vol.Schema({
             **access_schema(entry),
+            **account_schema(entry),
             vol.Required("trip_history_enabled", default=entry.options.get("trip_history_enabled", False)): bool,
+            vol.Required("cloud_trip_history_enabled", default=entry.options.get("cloud_trip_history_enabled", False)): bool,
             vol.Required(CONF_TELEMETRY_INTERVAL, default=entry.options.get(CONF_TELEMETRY_INTERVAL,
                 entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL))): vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL)),
             vol.Optional("amap_api_key", default=""): selector.TextSelector(selector.TextSelectorConfig(type="password")),

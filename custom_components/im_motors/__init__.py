@@ -19,7 +19,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.runtime_data = coordinator
     from .trips import TripManager
     from .trip_web import async_setup_web
-    coordinator.trips = TripManager(hass, entry, coordinator)
+    from .const import account_type, ACCOUNT_PRIMARY
+    if account_type(entry) == ACCOUNT_PRIMARY:
+        from .cloud_trips import CloudTripManager
+        coordinator.trips = CloudTripManager(hass, entry, coordinator)
+    else:
+        coordinator.trips = TripManager(hass, entry, coordinator)
     await coordinator.trips.setup()
     await async_setup_web(hass)
     from .control import async_setup_services

@@ -97,8 +97,11 @@ class AccountCredentials:
     expiration_time: int = 0
     suggest_refresh_time: int = 0
     vin: str = ""
+    client_type: str = "APP"
 
     def __post_init__(self):
+        if self.client_type not in ("APP", "WXAPP"):
+            raise CredentialError("Invalid session client type")
         for value in (self.access_token, self.refresh_token, self.push_device_id):
             _secret(value)
         _secret(self.vin, optional=True)
@@ -162,7 +165,7 @@ def prepare_refresh(config, credentials: AccountCredentials, *, now_ms: int,
     request_nonce = request_nonce or nonce(now_ms)
     _secret(request_nonce)
     body = json.dumps({"refreshToken": credentials.refresh_token,
-                       "deviceID": credentials.refresh_device_id, "clientType": "APP"},
+                       "deviceID": credentials.refresh_device_id, "clientType": credentials.client_type},
                       ensure_ascii=False, separators=(",", ":"))
     signed = {"x-app-key": "android", "x-nonce": request_nonce,
               "x-timestamp": str(now_ms)}
