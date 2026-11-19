@@ -25,7 +25,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     from .control import async_setup_services
     async_setup_services(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     from homeassistant.helpers import entity_registry as er
     from .telemetry import SENSORS, BINARY_SENSORS
     from .entity import async_label_other_entity
@@ -37,11 +36,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                  for vehicle in coordinator.data.vehicles
                  for key, spec in {**SENSORS, **BINARY_SENSORS}.items()
                  if coordinator.control_enabled and spec.diagnostic}
+    # Migrate existing default-disabled entities before platforms inspect the
+    # registry. Enabling them afterwards schedules a delayed entry reload on
+    # older HA versions and leaves restored states temporarily unavailable.
     for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
         if entity.unique_id in enabled_ids and entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION:
             registry.async_update_entity(entity.entity_id, disabled_by=None)
         if entity.unique_id in debug_ids:
             async_label_other_entity(hass, entity.entity_id)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
