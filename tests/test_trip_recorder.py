@@ -276,9 +276,13 @@ async def test_existing_queries_feed_archive_without_additional_cloud_calls(hass
                        "longitude": "121", "coOdntSysFmt": 0}}})
     account["transport"].send.side_effect = send
     entry = await create_entry(hass, account, options={"trip_history_enabled": True})
-    with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]):
+    from unittest.mock import Mock
+    h5 = Mock(side_effect=lambda *args: {"vin": VIN, "totalMileage": reading["odo"]})
+    with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]), \
+            patch("custom_components.im_motors.odometer.TripReader.read", h5):
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
+    entry.runtime_data.odometer_reader.reader.read = h5
     assert entry.state is ConfigEntryState.LOADED
     for state, odo, minute, position in [("parking",100,10,0),("driving",102,15,1000),
                                        ("parking",108,20,5000),("parking",108,30,5000)]:

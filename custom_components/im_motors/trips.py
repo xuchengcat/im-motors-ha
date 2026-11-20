@@ -85,6 +85,9 @@ class TripManager:
                 if point is None:
                     self.recording[vehicle] = dict(self.recording.get(vehicle, {}), observation=reason)
                     continue
+                odo = getattr(snapshot, "odometer", {}).get(vehicle, {})
+                point["odometer"] = odo.get("value")
+                point["odometer_source"] = "drive/daily/new.totalMileage"
                 previous_id = self.recording.get(vehicle, {}).get("last_trip_id")
                 previous_endpoint = self.recording.get(vehicle, {}).get("endpoint_revision", 0)
                 result = await self.hass.async_add_executor_job(self.recorder.observe, vehicle, point, self.coordinator.telemetry_interval_minutes)

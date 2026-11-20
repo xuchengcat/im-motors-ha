@@ -16,6 +16,7 @@
 | `trip-settings.imvault` | 加密的高德Key等行程设置 |
 | `cloud-trips.sqlite3` | 主账号长期归档的官方行程、轨迹与地址 |
 | `trips.sqlite3` | 授权账号自行记录与导入的行程 |
+| `odometer.imvault` | 总里程查询缓存、最近确认值与来源状态 |
 | `checkin-state.imvault` | 签到随机计划、每日提交状态与最近结果 |
 
 `.imvault`是加密存储；**SQLite行程库本身不是加密文件**，其中有个人位置历史。文件权限不等于加密，备份应保存在私有位置，不上传到公开仓库或问题反馈。

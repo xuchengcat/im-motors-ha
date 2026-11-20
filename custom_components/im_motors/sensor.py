@@ -33,7 +33,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             known.add(vehicle.identifier)
             entities.extend(ImMotorsSensor(coordinator, vehicle.identifier, key) for key in DESCRIPTIONS)
             entities.extend(ImMotorsTelemetrySensor(coordinator, vehicle.identifier, key, spec)
-                            for key, spec in SENSORS.items())
+                            for key, spec in SENSORS.items() if key != "odometer")
+            entities.append(ImMotorsOdometer(coordinator, vehicle.identifier))
             entities.extend(PendingSensor(coordinator, vehicle.identifier, name, index)
                             for index, name in enumerate(PENDING_FIELDS))
             if coordinator.control_enabled:
@@ -124,10 +125,6 @@ class ImMotorsTelemetrySensor(ImMotorsTelemetryEntity, SensorEntity):
             self._attr_icon = "mdi:code-json"
         if spec.unit and not spec.diagnostic:
             self._attr_state_class = SensorStateClass.MEASUREMENT
-        if key == "odometer":
-            self._attr_state_class = SensorStateClass.TOTAL
-            self._attr_suggested_display_precision = 0
-            self._attr_icon = "mdi:counter"
         if key == "charge_status":
             self._attr_device_class = SensorDeviceClass.ENUM
             self._attr_translation_key = key
@@ -159,3 +156,36 @@ class ImMotorsCheckinStatus(ImMotorsEntity, SensorEntity):
     def extra_state_attributes(self):
         state = self.coordinator.checkin.state
         return {"next_run": state.get("next_run"), **state.get("last_result", {})}
+
+
+class ImMotorsOdometer(ImMotorsEntity, SensorEntity):
+    """Keep the existing unique ID and Recorder history with the new source."""
+    _attr_name = "总里程"
+    _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_native_unit_of_measurement = "km"
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_suggested_display_precision = 1
+    _attr_icon = "mdi:counter"
+
+    def __init__(self, coordinator, vehicle_id):
+        super().__init__(coordinator, vehicle_id, "odometer")
+
+    @property
+    def reading(self):
+        return self.coordinator.data.odometer.get(self.vehicle_id, {})
+
+    @property
+    def native_value(self):
+        return self.reading.get("value")
+
+    @property
+    def extra_state_attributes(self):
+        from .telemetry import timestamp
+        value = self.reading
+        retrieved = timestamp(value.get("retrieved_at"))
+        attempted = timestamp(value.get("attempted_at"))
+        return {"source_field": "drive/daily/new.totalMileage", "source": "official_driving_calendar",
+                "trip_date": value.get("trip_date"), "status": value.get("status", "unknown"),
+                "error": value.get("error"), "retrieved_at": retrieved.isoformat() if retrieved else None,
+                "last_attempt": attempted.isoformat() if attempted else None,
+                "individual_sample_time_verified": False}

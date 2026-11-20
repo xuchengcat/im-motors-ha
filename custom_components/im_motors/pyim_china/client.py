@@ -60,6 +60,8 @@ class AccountSnapshot:
     telemetry_time_ms: int = 0
     control_status: Mapping = field(default_factory=lambda: MappingProxyType({}))
 
+    odometer: Mapping = field(default_factory=lambda: MappingProxyType({}))
+
     def __repr__(self):
         return "AccountSnapshot(<redacted>)"
 

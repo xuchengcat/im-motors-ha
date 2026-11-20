@@ -1,6 +1,6 @@
 # 文档导航
 
-首次使用从安装指南开始；已有账号可直接按功能进入。当前开发版为 **0.8.0b4**，具体安装版本与 HACS Release 请分别核对。
+首次使用从安装指南开始；已有账号可直接按功能进入。当前开发版为 **0.8.0b5**，具体安装版本与 HACS Release 请分别核对。
 
 ## 使用指南
 
@@ -11,6 +11,7 @@
 | 主账号官方日历、长期归档与轨迹 | [官方历史行程](guides/official-trip-history.md) |
 | 副账号从车况自行记录未来行程 | [本地行程记录](guides/local-trip-recording.md) |
 | 主账号随机自动签到 | [每日签到](guides/daily-checkin.md) |
+| 总里程新来源、查询间隔与权限 | [总里程](guides/odometer.md) |
 | 地图、坐标、高德 Key 与文字地址 | [地图与地址](guides/maps-and-addresses.md) |
 | 实验性车辆控制与运行模式 | [车辆控制](guides/vehicle-control.md) |
 | 备份、恢复与数据迁移 | [备份与恢复](guides/backup-and-recovery.md) |

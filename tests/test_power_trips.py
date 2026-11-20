@@ -94,11 +94,13 @@ def test_midnight_trip_is_attributed_to_departure_day(recorder):
 
 async def test_trip_recording_never_forces_cloud_refresh():
     from custom_components.im_motors.coordinator import ImMotorsCoordinator
-    snapshot=SimpleNamespace(telemetry_time_ms=1_000_000, control_status={})
+    from custom_components.im_motors.pyim_china import AccountSnapshot
+    snapshot=AccountSnapshot((),0,0,0,telemetry_time_ms=1_000_000)
     client=Mock();client.update.return_value=snapshot
     trips=SimpleNamespace(enabled=True,observe=AsyncMock())
     async def execute(call):return call()
     coordinator=SimpleNamespace(client=client,trips=trips,data=snapshot,control_results={},
+        odometer_reader=SimpleNamespace(update=Mock(return_value={})),
         config_entry=SimpleNamespace(options={'trip_sample_seconds':60}),
         hass=SimpleNamespace(async_add_executor_job=execute))
     for _ in range(2):
@@ -112,10 +114,12 @@ async def test_trip_recording_never_forces_cloud_refresh():
 async def test_disabled_trip_recording_keeps_normal_cloud_cache():
     from custom_components.im_motors.coordinator import ImMotorsCoordinator
     client=Mock()
-    client.update.return_value=SimpleNamespace(control_status={})
+    from custom_components.im_motors.pyim_china import AccountSnapshot
+    client.update.return_value=AccountSnapshot((),0,0,0)
     async def execute(call):return call()
     coordinator=SimpleNamespace(client=client,trips=SimpleNamespace(enabled=False,observe=AsyncMock()),
         data=None,control_results={},config_entry=SimpleNamespace(options={}),
+        odometer_reader=SimpleNamespace(update=Mock(return_value={})),
         hass=SimpleNamespace(async_add_executor_job=execute))
     await ImMotorsCoordinator._async_fetch_data(coordinator)
     assert client.update.call_args.kwargs['force_telemetry'] is False

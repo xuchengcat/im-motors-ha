@@ -18,7 +18,7 @@
 |---|---|
 | 电量 | `period.originalBmsPackSOCDsp`，0..100%，保留原始小数，不模仿 App 取整 |
 | CLTC / 估算续航 | `period.cltcVehElecRng` / `imcuVehElecRng`，km，分开显示，不为所有车型决定首页算法 |
-| 总里程 | `period.vehOdo`，整数 km，不缩放、不加偏移；LS6 本车仪表盘已核对；缺失、null、负数和32位最大值及以上不展示，合法0保留 |
+| 总里程 | 当天行程H5 `data.totalMileage`，数值km，保留小数；v0.8.0b5起替换缺失的v6字段，保留实体ID，见[总里程说明](../guides/odometer.md) |
 | 四轮胎压 | `period.frontLeft/frontRight/rearLeft/rearRightTirePressure`，浮点除以100为 bar；保留两位精度，非正数或相应 `warning.*TireStatus=1` 不显示 |
 | 四轮胎温 | `period.fl/fr/rl/rrTireTem`，°C，四轮独立 |
 | 车内 / 车辆外温 | `period.acInCarTemperature` / `outsideCarTemperature`，°C |
@@ -77,7 +77,7 @@ App 可能按在线、蓝牙来源、车型功能或控制进度改变显示。�
 
 原有规范化模型继续保留。提供173个英文原始诊断字段，统一命名为 `Other / group.field`，添加“其他”标签，173项在两种模式中均默认启用；`period.bmsPackSOH` 含义存疑、不能确认为电池健康度或百分比，仅以Other原始字段保持启用，供按需查找。原“电池健康度”实体保留ID迁移为 `Other / period.bmsPackSOH`，不声明单位、不做0–100范围过滤。覆盖历史未展示字段、模型候选字段和既有诊断原码，24个既有诊断实体保留原ID。未确认的字段不套用单位、缩放或枚举；释义和证据状态分别标注，详见[完整字段表](other-fields.md)。座椅缺失位置不填0，未闭合的档位不包装成控制选项。
 
-`period.vehOdo` 的 km 单位已与本车车辆仪表盘相同读数对照确认，默认启用独立总里程实体（key=odometer），不加偏移。健康页是独立 H5，其历史读数存在差异；该页的来源和独立更新时间仍未确认，不替代车况数据。历史原始里程诊断仍保留无单位身份以避免改变已有记录。累计里程采用 `SensorStateClass.TOTAL`，无 `last_reset`，不把云端旧快照可能造成的下降解释为计数器归零；选择依据 [HA 传感器文档](https://developers.home-assistant.io/docs/core/entity/sensor/#how-to-choose-state_class-and-last_reset)。其他车型单位仍需实车验证。`period.chargedPower` 传递链已找到，但显示单位未闭合，保留无单位诊断，不加 kWh 或能量统计类别。定位以以下章节为准。
+v0.8.0b5起，总里程使用行程H5当天的 `totalMileage`，不缩放、不加偏移，支持整数与小数公里。原v6的 `period.vehOdo` 自2026-11-18晚在本车响应中缺失，保留为原始诊断，不再驱动总里程实体。新来源的18日累计值与原字段最后有效值相同；当前读数及权限以实际官方响应为准。保留既有实体身份和 `SensorStateClass.TOTAL`，不设置 `last_reset`。查询历史日期会返回当时累计值，因此运行时始终查询上海当天。详见[总里程来源与限制](../guides/odometer.md)。`period.chargedPower` 传递链已找到，但显示单位未闭合，保留无单位诊断，不加 kWh 或能量统计类别。定位以以下章节为准。
 
 旧版11个占位实体保持默认禁用和 unavailable，供既有安装保留身份；实际读数使用新增实体，启用占位不会产生读数。
 

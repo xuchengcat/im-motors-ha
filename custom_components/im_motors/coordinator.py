@@ -1,6 +1,7 @@
 """A minute auth heartbeat with SDK-enforced metadata caching and failure stops."""
 import asyncio
 from datetime import timedelta
+from dataclasses import replace
 from functools import partial
 import logging
 
@@ -26,6 +27,8 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
         self.client.set_telemetry_interval(self.telemetry_interval_minutes)
         self.client.set_control_enabled(self.control_enabled)
         self.control_results = {}
+        from .odometer import OdometerReader
+        self.odometer_reader = OdometerReader(client)
         self._request_lock = asyncio.Lock()
 
     @property
@@ -88,6 +91,9 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
         try:
             snapshot = await self.hass.async_add_executor_job(partial(
                 self.client.update, include_telemetry=True, force_telemetry=force_telemetry))
+            odometer = await self.hass.async_add_executor_job(partial(
+                self.odometer_reader.update, snapshot, force=force_telemetry))
+            snapshot = replace(snapshot, odometer=odometer)
             self.control_results.update(snapshot.control_status)
             if getattr(self, "trips", None):
                 await self.trips.observe(snapshot)

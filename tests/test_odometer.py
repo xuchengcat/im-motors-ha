@@ -1,5 +1,5 @@
 """Cumulative mileage mapping, invalid samples and normal query lifecycle."""
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import pytest
 from homeassistant.helpers import entity_registry as er
@@ -22,28 +22,35 @@ def test_odometer_integer_km_and_invalid_samples(value,expected):
 async def test_odometer_entity_uses_shared_poll_and_manual_query(hass,account):
     def reading(value):
         return response({'category':{'vin':VIN,'updateTime':account['now'],
-            'period':{'vehOdo':value}}})
+            'period':{'vehOdo':value,'originalBmsPackSOCDsp':50}}})
     account['transport'].send.side_effect=[response([{'vin':VIN}]),reading(12345)]
     entry=await create_entry(hass,account)
-    with patch('custom_components.im_motors.pyim_china.AccountClient',return_value=account['client']):
+    h5 = Mock(return_value={'vin':VIN,'totalMileage':12345})
+    with patch('custom_components.im_motors.pyim_china.AccountClient',return_value=account['client']), \
+            patch('custom_components.im_motors.odometer.TripReader.read',h5):
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
+    entry.runtime_data.odometer_reader.reader.read = h5
     registry=er.async_get(hass)
     entity=next(e.entity_id for e in registry.entities.values() if e.unique_id.endswith('_odometer'))
+    soc_entity=next(e.entity_id for e in registry.entities.values() if e.unique_id.endswith('_soc'))
     state=hass.states.get(entity)
     assert state.state=='12345'
     assert state.attributes['unit_of_measurement']=='km'
     assert state.attributes['device_class']=='distance'
     assert state.attributes['state_class']=='total'
     assert state.attributes.get('last_reset') is None
-    assert state.attributes['source_field']=='period.vehOdo'
+    assert state.attributes['source_field']=='drive/daily/new.totalMileage'
     assert VIN not in str(state.as_dict())
     await entry.runtime_data.async_refresh()
     assert account['transport'].send.call_count==2
+    assert h5.call_count==1
     for value,expected in [(12346,'12346'),(None,'unknown'),(-1,'unknown'),(12346,'12346')]:
         account['transport'].send.side_effect=[reading(value)]
+        h5.return_value={'vin':VIN,'totalMileage':value}
         await entry.runtime_data.async_query_vehicle()
         await hass.async_block_till_done()
         assert hass.states.get(entity).state==expected
+        assert hass.states.get(soc_entity).state=="50"
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

@@ -23,6 +23,9 @@ async def async_get_config_entry_diagnostics(hass, entry):
             "poll_interval_seconds": (coordinator.telemetry_interval_minutes if coordinator
                                       else DEFAULT_TELEMETRY_INTERVAL) * 60,
             "individual_sample_time_verified": False,
+            "odometer_source": "drive/daily/new.totalMileage",
+            "odometer_status_counts": dict(Counter(
+                v.get("status", "unknown") for v in snapshot.odometer.values())) if snapshot else {},
             "vehicle_location_enabled": True,
             "vehicles_with_location": sum(coordinates(v) is not None for v in snapshot.telemetry.values()) if snapshot else 0,
             "location_status_counts": dict(Counter(location_status(v) for v in locations)),

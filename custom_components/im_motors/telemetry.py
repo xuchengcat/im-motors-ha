@@ -26,6 +26,7 @@ SENSORS = {
     "soc_secondary": FieldSpec("电量（BMS 显示字段）", "period", "bmsPackSOCDsp", "%", SensorDeviceClass.BATTERY, "percent", True),
     "cltc_range": FieldSpec("CLTC 续航", "period", "cltcVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
     "estimated_range": FieldSpec("估算续航", "period", "imcuVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
+    # Legacy snapshot/replay rule; the live odometer entity uses H5 totalMileage.
     "odometer": FieldSpec("总里程", "period", "vehOdo", "km", SensorDeviceClass.DISTANCE, "odometer"),
     "cabin_temperature": FieldSpec("车内温度", "period", "acInCarTemperature", "°C", SensorDeviceClass.TEMPERATURE),
     "outside_temperature": FieldSpec("车辆外温", "period", "outsideCarTemperature", "°C", SensorDeviceClass.TEMPERATURE),
