@@ -41,6 +41,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
         if entities:
             async_add_entities(entities)
 
+    if getattr(coordinator, "checkin", None) and coordinator.checkin.enabled:
+        async_add_entities([ImMotorsCheckinStatus(coordinator, v.identifier) for v in coordinator.data.vehicles])
     add_vehicles()
     entry.async_on_unload(coordinator.async_add_listener(add_vehicles))
 
@@ -138,3 +140,22 @@ class ImMotorsTelemetrySensor(ImMotorsTelemetryEntity, SensorEntity):
     @property
     def native_value(self):
         return self.mapped_value
+
+
+class ImMotorsCheckinStatus(ImMotorsEntity, SensorEntity):
+    _attr_name = "每日签到"
+    _attr_icon = "mdi:calendar-check"
+
+    def __init__(self, coordinator, vehicle_id):
+        super().__init__(coordinator, vehicle_id, "daily_checkin")
+
+    @property
+    def native_value(self):
+        status = self.coordinator.checkin.state.get("last_result", {}).get("status", "scheduled")
+        return {"already_checked": "已签到（查询确认）", "checked": "自动签到成功", "scheduled": "等待随机时间",
+                "unknown": "结果待核实", "error": "签到检查失败"}.get(status, status)
+
+    @property
+    def extra_state_attributes(self):
+        state = self.coordinator.checkin.state
+        return {"next_run": state.get("next_run"), **state.get("last_result", {})}

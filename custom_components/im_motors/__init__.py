@@ -26,6 +26,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     else:
         coordinator.trips = TripManager(hass, entry, coordinator)
     await coordinator.trips.setup()
+    from .checkin import CheckinManager
+    coordinator.checkin = CheckinManager(hass, entry, coordinator)
+    await coordinator.checkin.setup()
     await async_setup_web(hass)
     from .control import async_setup_services
     async_setup_services(hass)
@@ -67,6 +70,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.runtime_data.client.set_control_enabled(False)
+    if getattr(entry.runtime_data, "checkin", None):
+        await entry.runtime_data.checkin.stop()
     if getattr(entry.runtime_data, "trips", None):
         await entry.runtime_data.trips.stop()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

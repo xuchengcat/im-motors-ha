@@ -138,7 +138,8 @@
           "clear_amap_key": "清除已保存的高德 Key",
           "telemetry_interval_minutes": "车况查询间隔（分钟，最低5分钟）",
           "account_type": "账号类型",
-          "cloud_trip_history_enabled": "每日自动归档官方行程（仅主账号）"
+          "cloud_trip_history_enabled": "每日自动归档官方行程（仅主账号）",
+          "daily_checkin_enabled": "每日随机自动签到（主账号，02:00–06:00）"
         }
       }
     },

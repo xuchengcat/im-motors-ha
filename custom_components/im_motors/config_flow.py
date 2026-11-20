@@ -320,6 +320,8 @@ class ImMotorsOptionsFlow(OptionsFlow):
                             and account[CONF_ACCOUNT_TYPE] == ACCOUNT_AUTHORIZED,
                         "cloud_trip_history_enabled": user_input.get("cloud_trip_history_enabled", False)
                             and account[CONF_ACCOUNT_TYPE] == ACCOUNT_PRIMARY,
+                        "daily_checkin_enabled": user_input.get("daily_checkin_enabled", False)
+                            and account[CONF_ACCOUNT_TYPE] == ACCOUNT_PRIMARY,
                         CONF_TELEMETRY_INTERVAL: interval,
                         "amap_key_configured": bool(saved.get("amap_api_key")),
                     })
@@ -327,6 +329,7 @@ class ImMotorsOptionsFlow(OptionsFlow):
             **access_schema(entry),
             **account_schema(entry),
             vol.Required("trip_history_enabled", default=entry.options.get("trip_history_enabled", False)): bool,
+            vol.Required("daily_checkin_enabled", default=entry.options.get("daily_checkin_enabled", False)): bool,
             vol.Required("cloud_trip_history_enabled", default=entry.options.get("cloud_trip_history_enabled", False)): bool,
             vol.Required(CONF_TELEMETRY_INTERVAL, default=entry.options.get(CONF_TELEMETRY_INTERVAL,
                 entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL))): vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL)),

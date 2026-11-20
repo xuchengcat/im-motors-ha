@@ -138,7 +138,8 @@
           "clear_amap_key": "Delete saved AMap key",
           "telemetry_interval_minutes": "Vehicle query interval (minutes, minimum 5)",
           "account_type": "Account type",
-          "cloud_trip_history_enabled": "Archive official trips daily (primary account)"
+          "cloud_trip_history_enabled": "Archive official trips daily (primary account)",
+          "daily_checkin_enabled": "Daily randomized check-in (primary account, 02:00–06:00)"
         }
       }
     },
