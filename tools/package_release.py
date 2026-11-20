@@ -17,7 +17,7 @@ def main():
     files.extend([ROOT / "requirements-test.txt", ROOT / "pytest.ini"])
     files.extend((ROOT / "tests").glob("*.py"))
     files.extend(path for path in (ROOT / "tools").glob("*.py") if path.name != "vendor_runtime.py")
-    files.extend((ROOT / "docs").glob("*.md"))
+    files.extend((ROOT / "docs").rglob("*.md"))
     dist = ROOT / "dist"
     dist.mkdir(exist_ok=True)
     archive = dist / f"im_motors_ha-{version}.zip"

@@ -1,6 +1,6 @@
 # 主账号官方行车日历
 
-本功能对应 App 爱车首页右上角日历入口，每日归档日期、日汇总、当天行程与单次轨迹，展示只读本地数据库；仅查询，不修改 App 的行程采集或轨迹权限。签到未在本次实现。
+本功能对应 App 爱车首页右上角日历入口，每日归档日期、日汇总、当天行程与单次轨迹，展示只读本地数据库；仅查询，不修改 App 的行程采集或轨迹权限。随机自动签到是独立选项，见[每日签到](daily-checkin.md)。
 
 ## 使用与每日归档
 
@@ -31,7 +31,7 @@ H5 成功响应的外层可为 `resultCode=success` 且数据加密，解密后�
 
 ## 数据与地图
 
-- `hasTripDates` 规范化为日期，用于日历标记。
+- 远程 `hasTripDates` 规范化为日期用于归档发现；页面日历标记从本地已归档行程生成。
 - 日里程使用服务端 `dayMileage`，不以单次里程之和替代；日时长使用 `dailyMileageDuration`。
 - 列表使用 `tripId`、完整 `tripStartTime` / `tripEndTime`、`tripMileage`、`tripDuration`。跨天日期保留；无时区的详情查询时间按 Asia/Shanghai 转为 Unix 毫秒，与 App 深链语义一致。
 - 详情使用 `tripStartLat/Lon`、`tripEndLat/Lon` 和 `poiList` 的经纬度。依据 App 将这些坐标直接传给高德的实现，地图按 GCJ-02 转为 WGS-84。
