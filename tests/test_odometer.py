@@ -24,10 +24,10 @@ async def test_odometer_entity_uses_shared_poll_and_manual_query(hass,account):
         return response({'category':{'vin':VIN,'updateTime':account['now'],
             'period':{'vehOdo':value,'originalBmsPackSOCDsp':50}}})
     account['transport'].send.side_effect=[response([{'vin':VIN}]),reading(12345)]
-    entry=await create_entry(hass,account)
+    entry=await create_entry(hass,account,options={"account_type":"primary"})
     h5 = Mock(return_value={'vin':VIN,'totalMileage':12345})
     with patch('custom_components.im_motors.pyim_china.AccountClient',return_value=account['client']), \
-            patch('custom_components.im_motors.odometer.TripReader.read',h5):
+            patch('custom_components.im_motors.primary.trip_api.TripReader.read',h5):
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
     entry.runtime_data.odometer_reader.reader.read = h5

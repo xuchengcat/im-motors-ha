@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from custom_components.im_motors.trip_recorder import TripRecorder, sample, distance_m
+from custom_components.im_motors.authorized.trip_recorder import TripRecorder, sample, distance_m
 from custom_components.im_motors.trip_store import TripStore
 from test_telemetry import snapshot
 
@@ -277,9 +277,9 @@ async def test_existing_queries_feed_archive_without_additional_cloud_calls(hass
     account["transport"].send.side_effect = send
     entry = await create_entry(hass, account, options={"trip_history_enabled": True})
     from unittest.mock import Mock
-    h5 = Mock(side_effect=lambda *args: {"vin": VIN, "totalMileage": reading["odo"]})
+    h5 = Mock(side_effect=lambda *args: {"requested_vin": VIN, "mileage": reading["odo"], "source_updated": None})
     with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]), \
-            patch("custom_components.im_motors.odometer.TripReader.read", h5):
+            patch("custom_components.im_motors.authorized.health_api.HealthReader.read", h5):
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
     entry.runtime_data.odometer_reader.reader.read = h5

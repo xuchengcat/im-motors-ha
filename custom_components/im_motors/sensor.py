@@ -184,7 +184,8 @@ class ImMotorsOdometer(ImMotorsEntity, SensorEntity):
         value = self.reading
         retrieved = timestamp(value.get("retrieved_at"))
         attempted = timestamp(value.get("attempted_at"))
-        return {"source_field": "drive/daily/new.totalMileage", "source": "official_driving_calendar",
+        return {"source_field": value.get("source_field", self.coordinator.odometer_reader.source_field),
+                "source": value.get("source"), "source_updated": value.get("source_updated"),
                 "trip_date": value.get("trip_date"), "status": value.get("status", "unknown"),
                 "error": value.get("error"), "retrieved_at": retrieved.isoformat() if retrieved else None,
                 "last_attempt": attempted.isoformat() if attempted else None,

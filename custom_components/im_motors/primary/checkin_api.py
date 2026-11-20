@@ -1,31 +1,18 @@
 """App-confirmed H5 check-in calls, sharing the protected HA account session."""
 import base64
-import hashlib
-import hmac
 import http.client
 import json
 from pathlib import Path
 import secrets
 import ssl
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
-from .cloud_trip_api import decode_response
-from .pyim_china.account_auth import RefreshDecision
-from .pyim_china.standalone_refresh_probe import refresh_once, load_session
-from .trip_api import TripError
+from ..h5 import decode_response, signing
+from ..pyim_china.account_auth import RefreshDecision
+from ..pyim_china.standalone_refresh_probe import refresh_once, load_session
+from ..trip_api import TripError
 
 BASE = '/app/planet/api/v1/checkin/'
-
-
-def signing(method, url, signed, secret, query='', body=None):
-    # ImJsCommonImpl2.getApiSignature -> SignUtils.g: full URL, sorted headers,
-    # exact wire query, then JSON body (the check call has an empty object).
-    parts = [method, url, *[f'{k}={signed[k]}' for k in sorted(signed)]]
-    if query:
-        parts.append(query)
-    if body:
-        parts.append(body)
-    return base64.b64encode(hmac.new(secret, quote('&'.join(parts), safe='-._~').encode(), hashlib.sha256).digest()).decode()
 
 
 def send(method, path, headers, body):
@@ -62,7 +49,7 @@ class CheckinApi:
                 c.data_dir/'attempts'/('refresh-'+secrets.token_hex(16)+'.imvault'),
                 load_config=lambda: native, transport_factory=c.transport_factory)
             _, creds = load_session(c.data_dir/'session.imvault')
-        cfg = json.loads(Path(__file__).with_name('pyim_china').joinpath('h5_protocol.json').read_text())
+        cfg = json.loads(Path(__file__).parent.parent.joinpath('pyim_china', 'h5_protocol.json').read_text())
         method = 'POST' if operation == 'check' else 'GET'
         path = BASE+operation
         query = ''

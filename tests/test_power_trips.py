@@ -4,7 +4,7 @@ import json
 import pytest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
-from custom_components.im_motors.trip_recorder import TripRecorder
+from custom_components.im_motors.authorized.trip_recorder import TripRecorder
 from custom_components.im_motors.trip_store import TripStore
 from custom_components.im_motors.trip_api import TripError
 

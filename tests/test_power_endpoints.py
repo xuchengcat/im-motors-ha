@@ -1,6 +1,6 @@
 """Keep power-cycle boundaries and require spatial evidence for endpoints."""
 import json
-from custom_components.im_motors.trip_recorder import TripRecorder
+from custom_components.im_motors.authorized.trip_recorder import TripRecorder
 from custom_components.im_motors.trip_store import TripStore
 from test_power_trips import recorder, recorded, observation
 

@@ -1,10 +1,7 @@
-"""Local trip recording from existing telemetry; encrypted AMap settings."""
+"""Shared trip state, address completion and encrypted settings."""
 import asyncio
-from datetime import datetime, timezone
-from .const import account_type, ACCOUNT_AUTHORIZED
 from .trip_api import TripError, AmapGeocoder
 from .trip_store import TripStore
-from .trip_recorder import TripRecorder, sample
 from .pyim_china.credential_store import key_context, vault_for_path
 
 ERRORS = {
@@ -44,66 +41,17 @@ def settings(client, value=None):
         return vault._load_payload() if vault.path.exists() else {}
 
 
-class TripManager:
-    source = "ha_telemetry"
-    def __init__(self, hass, entry, coordinator):
+class BaseTripManager:
+    """Shared state, task cleanup and address completion for both sources."""
+
+    def __init__(self, hass, entry, coordinator, *, database="trips.sqlite3"):
         self.hass, self.entry, self.coordinator = hass, entry, coordinator
-        self.store = TripStore(coordinator.client.data_dir / "trips.sqlite3")
-        self.recorder = TripRecorder(self.store, time_zone=hass.config.time_zone)
+        self.store = TripStore(coordinator.client.data_dir / database)
+        self.recorder = None
         self.task = None
         self.status = {"state": "idle"}
         self.recording = {}
         self.key = ""
-
-    @property
-    def enabled(self):
-        return (account_type(self.entry) == ACCOUNT_AUTHORIZED
-                and self.entry.options.get("trip_history_enabled", False))
-
-    async def setup(self):
-        await self.hass.async_add_executor_job(self.store.initialize)
-        saved = await self.hass.async_add_executor_job(settings, self.coordinator.client)
-        self.key = saved.get("amap_api_key", "")
-        self.status = await self.hass.async_add_executor_job(self.store.state, "sync") or {"state": "idle"}
-        if self.status.get("state") == "running":
-            await self.set_status(state="error", error="interrupted")
-        for vehicle in self.coordinator.data.vehicles:
-            await self.hass.async_add_executor_job(self.recorder.rebuild_if_needed,
-                vehicle.identifier, self.coordinator.telemetry_interval_minutes)
-            self.recording[vehicle.identifier] = await self.hass.async_add_executor_job(self.store.state, "recorder:" + vehicle.identifier)
-        if self.enabled:
-            await self.observe(self.coordinator.data)
-            if self.key and not self.task:
-                self.start(geocode_only=True)
-
-    async def observe(self, snapshot):
-        if not self.enabled:
-            return
-        for vehicle, telemetry in snapshot.telemetry.items():
-            try:
-                point, reason = sample(telemetry, datetime.now(timezone.utc), self.coordinator.telemetry_interval_minutes)
-                if point is None:
-                    self.recording[vehicle] = dict(self.recording.get(vehicle, {}), observation=reason)
-                    continue
-                odo = getattr(snapshot, "odometer", {}).get(vehicle, {})
-                point["odometer"] = odo.get("value")
-                point["odometer_source"] = "drive/daily/new.totalMileage"
-                previous_id = self.recording.get(vehicle, {}).get("last_trip_id")
-                previous_endpoint = self.recording.get(vehicle, {}).get("endpoint_revision", 0)
-                result = await self.hass.async_add_executor_job(self.recorder.observe, vehicle, point, self.coordinator.telemetry_interval_minutes)
-                self.recording[vehicle] = result
-                if (result.get("last_trip_id") != previous_id or result.get("endpoint_revision", 0) != previous_endpoint) and self.key and not self.task:
-                    self.start(geocode_only=True)
-            except Exception:
-                self.recording[vehicle] = dict(self.recording.get(vehicle, {}), observation="recording_failed")
-
-    def start(self, *, geocode_only=False):
-        if not self.enabled:
-            raise TripError("history_disabled")
-        if self.task is not None:
-            return False
-        self.task = self.hass.async_create_task(self._run(geocode_only=geocode_only), "im_motors trip addresses")
-        return True
 
     async def stop(self):
         if self.task:
@@ -116,22 +64,6 @@ class TripManager:
     async def set_status(self, **values):
         self.status = dict(self.status, **values)
         await self.hass.async_add_executor_job(self.store.state, "sync", self.status)
-
-    async def _run(self, *, geocode_only=False):
-        try:
-            await self.set_status(state="running", error=None, address_error=None)
-            if not geocode_only:
-                await self.coordinator.async_query_vehicle()
-            for vehicle in self.coordinator.data.vehicles:
-                await self.geocode(vehicle.identifier)
-            await self.set_status(state="complete", error=None, finished_at=datetime.now(timezone.utc).isoformat())
-        except asyncio.CancelledError:
-            await self.set_status(state="error", error="interrupted")
-            raise
-        except Exception as error:
-            await self.set_status(state="error", error=error.code if isinstance(error, TripError) else "recording_failed")
-        finally:
-            self.task = None
 
     async def geocode(self, vehicle):
         if not self.key:

@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL, control_enabled
+from .const import account_type, DOMAIN, CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL, control_enabled
 from .pyim_china import AccountClient, AccountSnapshot, ClientFailure, LoginRequired
 from .pyim_china.client import TemporaryReadFailure
 
@@ -28,7 +28,7 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
         self.client.set_control_enabled(self.control_enabled)
         self.control_results = {}
         from .odometer import OdometerReader
-        self.odometer_reader = OdometerReader(client)
+        self.odometer_reader = OdometerReader(client, account_kind=account_type(entry))
         self._request_lock = asyncio.Lock()
 
     @property

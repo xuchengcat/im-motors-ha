@@ -5,8 +5,8 @@ import json
 import math
 from zoneinfo import ZoneInfo
 
-from .location import location_status
-from .telemetry import raw, normalized, SENSORS, timestamp
+from ..location import location_status
+from ..telemetry import raw, normalized, SENSORS, timestamp
 
 ALGORITHM_VERSION = 4
 PARKING_RADIUS_M = 50

@@ -9,7 +9,7 @@ from test_ha import create_entry
 from test_sms_login import backend, setup_send, read, save, PHONE, CODE
 from custom_components.im_motors.config_flow import ImMotorsConfigFlow, account_input, access_input
 from custom_components.im_motors.const import account_type
-from custom_components.im_motors.trips import TripManager
+from custom_components.im_motors.authorized.trips import TripManager
 from custom_components.im_motors.pyim_china.account_auth import prepare_refresh, CredentialError
 from custom_components.im_motors.pyim_china.credential_store import key_context
 from custom_components.im_motors.pyim_china.local_production_config import load_local_production_config

@@ -7,6 +7,8 @@
 | 目录 | 内容 |
 |---|---|
 | `custom_components/im_motors/` | HA生命周期、配置、实体、行程、签到与前端 |
+| `custom_components/im_motors/primary/` | 主账号：官方行程API与归档、签到、行程H5总里程 |
+| `custom_components/im_motors/authorized/` | 授权账号：本地采样/行程、健康诊断API与总里程 |
 | `custom_components/im_motors/pyim_china/` | 认证、签名、请求校验与加密存储 |
 | `tests/` | 合成账号与HA回归测试，阻止真实HTTPS |
 | `tools/` | `package_release.py`打包、`audit_release.py`审计、`account_cli.py`离线恢复 |
@@ -18,6 +20,14 @@
 | `dist/` | 构建ZIP与校验值，不提交Git |
 
 个人账号、加密会话、密钥、APK、解包结果、抓包和真实位置历史放在工程外的受保护目录，不加入源码或发布包。不要为整理目录移动正在使用的HA数据目录。
+
+## 修改主、副账号功能
+
+- 主账号总里程：`primary/odometer.py`；行程接口与归档：`primary/trip_api.py`、`primary/trips.py`；签到：`primary/checkin_api.py`、`primary/checkin.py`。
+- 副账号总里程：`authorized/odometer.py`；车辆诊断：`authorized/health_api.py`；本地记录：`authorized/trips.py`、`authorized/trip_recorder.py`。
+- 公共层：根目录 `h5.py` 负责纯签名/解密，`odometer.py` 负责按角色选源与私有缓存，`trips.py` 负责共享任务/地址补全；`trip_store.py`、`trip_web.py` 仍供两种行程来源共用。
+
+主、副账号模块不相互导入。入口在 `__init__.py` 和协调器根据账号类型分派，运行模式保持独立。修改一种来源时优先在其目录内完成，涉及共同缓存、签名或界面时再修改公共层；不要复制两份认证会话或共享可变的来源缓存。旧模块路径已在源码和测试中统一更新。
 
 ## 本地验证与打包
 

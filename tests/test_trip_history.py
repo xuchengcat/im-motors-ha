@@ -12,7 +12,8 @@ import pytest
 from custom_components.im_motors.trip_api import TripError, AmapGeocoder
 from custom_components.im_motors.trip_parser import parse_day
 from custom_components.im_motors.trip_store import TripStore, retention_start
-from custom_components.im_motors.trips import TripManager, settings
+from custom_components.im_motors.authorized.trips import TripManager
+from custom_components.im_motors.trips import settings
 from custom_components.im_motors.pyim_china.offline_encryption import encrypt_text
 from test_ha import create_entry
 from conftest import VIN

@@ -9,7 +9,7 @@ import pytest
 
 from conftest import VIN
 from test_cloud_trips import DAY, VEHICLE, detail
-from custom_components.im_motors.cloud_trips import CloudTripManager
+from custom_components.im_motors.primary.trips import CloudTripManager
 from custom_components.im_motors.trip_api import TripError
 from custom_components.im_motors.trip_store import TripStore
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
@@ -115,7 +115,7 @@ async def test_changed_remote_trip_refreshes_detail_without_duplicate(manager):
 async def test_ha_started_event_schedules_once_and_unload_removes_timer(manager):
     remove = Mock()
     manager.reader.read = Mock(side_effect=provider({}))
-    with patch('custom_components.im_motors.cloud_trips.async_track_time_change', return_value=remove) as track:
+    with patch('custom_components.im_motors.primary.trips.async_track_time_change', return_value=remove) as track:
         await manager.setup()
         assert track.call_args.kwargs == {'hour': 3, 'minute': 0, 'second': 0}
         manager.hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
@@ -132,7 +132,7 @@ async def test_ha_started_event_schedules_once_and_unload_removes_timer(manager)
 async def test_disabled_role_never_schedules_or_reads(manager):
     manager.entry.options['account_type'] = 'authorized'
     manager.reader.read = Mock()
-    with patch('custom_components.im_motors.cloud_trips.async_track_time_change') as track:
+    with patch('custom_components.im_motors.primary.trips.async_track_time_change') as track:
         await manager.setup()
         track.assert_not_called()
     assert not await manager.async_daily_sync()

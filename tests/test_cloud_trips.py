@@ -12,8 +12,8 @@ import pytest
 
 from conftest import VIN, response
 from test_ha import create_entry
-from custom_components.im_motors.cloud_trip_api import TripReader, decode_response, h5_signature
-from custom_components.im_motors.cloud_trips import CloudTripManager, calendar_dates, route_points
+from custom_components.im_motors.primary.trip_api import TripReader, decode_response, h5_signature
+from custom_components.im_motors.primary.trips import CloudTripManager, calendar_dates, route_points
 from custom_components.im_motors.pyim_china.credential_store import key_context, vault_for_path
 from custom_components.im_motors.pyim_china.offline_encryption import encrypt_text
 from custom_components.im_motors.trip_api import TripError

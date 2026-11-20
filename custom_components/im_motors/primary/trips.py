@@ -8,12 +8,12 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_time_change
 
-from .cloud_trip_api import TripReader
-from .const import account_type, ACCOUNT_PRIMARY
-from .trip_api import TripError
-from .trip_parser import parse_day, detail_query, coordinates, number
-from .trip_store import TripStore, validate_range
-from .trips import TripManager, settings
+from .trip_api import TripReader
+from ..const import account_type, ACCOUNT_PRIMARY
+from ..trip_api import TripError
+from ..trip_parser import parse_day, detail_query, coordinates, number
+from ..trip_store import TripStore, validate_range
+from ..trips import BaseTripManager, settings
 
 
 REMOTE_HISTORY_DAYS = 60
@@ -64,13 +64,12 @@ def route_points(detail):
     return result
 
 
-class CloudTripManager(TripManager):
+class CloudTripManager(BaseTripManager):
     source = "official_cloud"
 
     def __init__(self, hass, entry, coordinator):
-        super().__init__(hass, entry, coordinator)
+        super().__init__(hass, entry, coordinator, database="cloud-trips.sqlite3")
         # Switching roles never overwrites locally recorded or imported trips.
-        self.store = TripStore(coordinator.client.data_dir / "cloud-trips.sqlite3")
         self.recorder = None
         self.reader = TripReader(coordinator.client)
         self._remove_daily = None

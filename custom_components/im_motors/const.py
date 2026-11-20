@@ -1,6 +1,6 @@
 """Integration constants; legacy accounts remain read only by default."""
 DOMAIN = "im_motors"
-INTEGRATION_VERSION = "0.8.0b5"
+INTEGRATION_VERSION = "0.8.0b6"
 CONF_ACCESS_MODE = "access_mode"
 CONF_CONTROL_RISK = "accept_control_risk"
 MODE_READ_ONLY = "read_only"

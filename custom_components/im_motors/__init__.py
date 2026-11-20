@@ -17,18 +17,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = ImMotorsCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
-    from .trips import TripManager
     from .trip_web import async_setup_web
     from .const import account_type, ACCOUNT_PRIMARY
     if account_type(entry) == ACCOUNT_PRIMARY:
-        from .cloud_trips import CloudTripManager
+        from .primary.trips import CloudTripManager
         coordinator.trips = CloudTripManager(hass, entry, coordinator)
     else:
+        from .authorized.trips import TripManager
         coordinator.trips = TripManager(hass, entry, coordinator)
     await coordinator.trips.setup()
-    from .checkin import CheckinManager
-    coordinator.checkin = CheckinManager(hass, entry, coordinator)
-    await coordinator.checkin.setup()
+    coordinator.checkin = None
+    if account_type(entry) == ACCOUNT_PRIMARY:
+        from .primary.checkin import CheckinManager
+        coordinator.checkin = CheckinManager(hass, entry, coordinator)
+        await coordinator.checkin.setup()
     await async_setup_web(hass)
     from .control import async_setup_services
     async_setup_services(hass)

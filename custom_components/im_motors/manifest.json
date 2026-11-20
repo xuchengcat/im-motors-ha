@@ -12,7 +12,7 @@
   "requirements": [
     "pycryptodome==3.24.0"
   ],
-  "version": "0.8.0b5",
+  "version": "0.8.0b6",
   "after_dependencies": [
     "frontend",
     "http",

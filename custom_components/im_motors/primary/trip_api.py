@@ -1,52 +1,16 @@
 """Signed, read-only official driving calendar requests; no token logging."""
 import base64
-import hashlib
-import hmac
 import json
 from pathlib import Path
 import secrets
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
-from .trip_api import TripError, https_get
-from .pyim_china.account_auth import nonce, RefreshDecision
-from .pyim_china.credential_store import key_context
-from .pyim_china.runtime_lock import AccountFileLock
-from .pyim_china.offline_signature import signature
-from .pyim_china.offline_read_response import _load
-from .pyim_china.offline_encryption import decrypt_text, decrypted_response_body
-
-
-def h5_signature(url, query, headers, secret):
-    # ImJsCommonImpl2.getApiSignature signs the full H5 URL, not native path.
-    canonical = "&".join(["GET", url] + [f"{key}={headers[key]}" for key in sorted(headers)] + ([query] if query else []))
-    return base64.b64encode(hmac.new(secret, quote(canonical, safe="-._~").encode(), hashlib.sha256).digest()).decode()
-
-
-def decode_response(body, headers, key, *, h5=False):
-    try:
-        value = _load(body)
-        if headers.get("x-encrypt") == "true":
-            if h5:
-                envelope = value.get("data", value)
-                value = _load(decrypt_text(envelope["cipherText"], key))
-            else:
-                value = _load(decrypted_response_body(body, key))
-        code = value.get("resultCode")
-        if code in ("22061", "invalid_token"):
-            raise TripError("authentication_failed")
-        if code == "22064":
-            raise TripError("protocol_rejected")
-        if code == "23373":
-            raise TripError("not_vehicle_owner")
-        if code != "200":
-            raise TripError("business_error")
-        if not isinstance(value.get("data"), dict):
-            raise TripError("invalid_response")
-        return value["data"]
-    except TripError:
-        raise
-    except Exception:
-        raise TripError("invalid_response") from None
+from ..trip_api import TripError, https_get
+from ..h5 import h5_signature, decode_response
+from ..pyim_china.account_auth import nonce, RefreshDecision
+from ..pyim_china.credential_store import key_context
+from ..pyim_china.runtime_lock import AccountFileLock
+from ..pyim_china.offline_signature import signature
 
 
 class TripReader:
@@ -87,7 +51,7 @@ class TripReader:
                     headers["x-signature"] = signature("GET", path, signed, native.app_secret, encoded)
                     body, returned_headers = self.get("mh.immotors.com", path + "?" + encoded, headers)
                     return decode_response(body, returned_headers, native.encrypt_key)
-                config = json.loads(Path(__file__).with_name("pyim_china").joinpath("h5_protocol.json").read_text())
+                config = json.loads(Path(__file__).parent.parent.joinpath("pyim_china", "h5_protocol.json").read_text())
                 url = "https://m.immotors.com" + path
                 signed = {"x-app-key": "android-h5", "x-nonce": secrets.token_hex(5), "x-timestamp": str(now), "x-encrypt": "false"}
                 headers.update(signed)

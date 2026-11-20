@@ -11,8 +11,8 @@ import json
 from urllib.parse import quote
 import pytest
 
-from custom_components.im_motors.checkin import plan, transaction, CheckinManager
-from custom_components.im_motors.checkin_api import CheckinApi, checked_today, signing, send
+from custom_components.im_motors.primary.checkin import plan, transaction, CheckinManager
+from custom_components.im_motors.primary.checkin_api import CheckinApi, checked_today, signing, send
 from custom_components.im_motors.pyim_china.credential_store import key_context, vault_for_path
 from custom_components.im_motors.pyim_china.runtime_lock import AccountFileLock
 from custom_components.im_motors.trip_api import TripError
