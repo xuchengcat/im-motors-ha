@@ -28,6 +28,9 @@ SENSORS = {
     "estimated_range": FieldSpec("估算续航", "period", "imcuVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
     # Legacy snapshot/replay rule; the live odometer entity uses H5 totalMileage.
     "odometer": FieldSpec("总里程", "period", "vehOdo", "km", SensorDeviceClass.DISTANCE, "odometer"),
+    "fuel_level": FieldSpec("油量", "period", "fuelLvlPcnt", "%", conversion="percent"),
+    "fuel_range": FieldSpec("燃油续航", "period", "icbVehFuelRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
+    "electric_range": FieldSpec("纯电续航", "period", "icbVehElecRng", "km", SensorDeviceClass.DISTANCE, "nonnegative"),
     "cabin_temperature": FieldSpec("车内温度", "period", "acInCarTemperature", "°C", SensorDeviceClass.TEMPERATURE),
     "outside_temperature": FieldSpec("车辆外温", "period", "outsideCarTemperature", "°C", SensorDeviceClass.TEMPERATURE),
     "weather_temperature": FieldSpec("天气温度", "weatherInfo", "temperature", "°C", SensorDeviceClass.TEMPERATURE, "weather"),
