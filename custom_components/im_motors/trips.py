@@ -80,7 +80,7 @@ class BaseTripManager:
             for trip in rows:
                 changed = False
                 for prefix in ("start", "end"):
-                    point = trip.get(prefix + "_coordinates")
+                    point = trip.get(prefix + "_coordinates") or trip.get("observed_" + prefix + "_coordinates")
                     if not point or trip.get(prefix + "_address"):
                         continue
                     cached = await self.hass.async_add_executor_job(self.store.address, point)
