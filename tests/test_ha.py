@@ -17,6 +17,7 @@ from custom_components.im_motors.pyim_china import ClientFailure, LoginRequired
 from custom_components.im_motors.sensor import PendingSensor
 from custom_components.im_motors.pyim_china.client import AccountSnapshot, Vehicle
 from custom_components.im_motors.telemetry import SENSORS, BINARY_SENSORS
+from custom_components.im_motors.capabilities import requires_hybrid
 from conftest import VIN, response
 
 
@@ -62,7 +63,7 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
     assert entry.state is ConfigEntryState.LOADED
     states = [state for state in hass.states.async_all() if state.entity_id.startswith(("sensor.", "binary_sensor."))]
     enabled = sum(spec.enabled_by_default and (not spec.diagnostic or spec.debug or key in ("vehicle_updated", "vehicle_series", "tab_project_code"))
-                  for key, spec in SENSORS.items()) + len(BINARY_SENSORS)
+                  for key, spec in SENSORS.items() if not requires_hybrid(key, spec)) + len(BINARY_SENSORS)
     assert len(states) == 7 + enabled
     assert any(state.state == "已接入" for state in states)
     assert any(state.state == "86.1" and state.attributes.get("unit_of_measurement") == "%" for state in states)
@@ -76,7 +77,7 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
     assert devices[0].manufacturer == "IM Motors"
     registry = er.async_get(hass)
     entities = [entity for entity in registry.entities.values() if entity.config_entry_id == entry.entry_id]
-    assert len(entities) == 20 + len(SENSORS) + len(BINARY_SENSORS)
+    assert len(entities) == 20 + sum(not requires_hybrid(k, s) for k, s in SENSORS.items()) + len(BINARY_SENSORS)
     assert sum(entity.disabled_by is not None for entity in entities) == len(entities) - len(states) - 2
     diagnostics = await async_get_config_entry_diagnostics(hass, entry)
     assert diagnostics["associated_vehicle_count"] == 1
@@ -89,7 +90,7 @@ async def test_full_entry_load_entities_diagnostics_and_unload(hass, account):
         (second,), snapshot.metadata_time_ms, snapshot.expiration_time_ms, snapshot.refresh_time_ms))
     await hass.async_block_till_done()
     entities = [entity for entity in registry.entities.values() if entity.config_entry_id == entry.entry_id]
-    assert len(entities) == 2 * (20 + len(SENSORS) + len(BINARY_SENSORS))
+    assert len(entities) == 2 * (20 + sum(not requires_hybrid(k, s) for k, s in SENSORS.items()) + len(BINARY_SENSORS))
     assert all(hass.states.get(state.entity_id).state == "unavailable" for state in states)
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

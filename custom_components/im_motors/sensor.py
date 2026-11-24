@@ -9,6 +9,7 @@ from .const import PENDING_FIELDS
 from .entity import ImMotorsEntity, ImMotorsTelemetryEntity
 from .control import ImMotorsControlEntity
 from .telemetry import SENSORS, CHARGE_STATES
+from .capabilities import visible, requires_hybrid, registry_changes
 
 PARALLEL_UPDATES = 0
 DESCRIPTIONS = {
@@ -23,17 +24,34 @@ DESCRIPTIONS = {
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = entry.runtime_data
     known = set()
+    telemetry_known = set()
 
     @callback
     def add_vehicles():
         entities = []
         for vehicle in coordinator.data.vehicles:
+            from homeassistant.helpers import entity_registry as er
+            registry = er.async_get(hass)
+            for key, spec in SENSORS.items():
+                if key == "odometer":
+                    continue
+                identity = (vehicle.identifier, key)
+                allowed = visible(coordinator, vehicle.identifier, key, spec)
+                if requires_hybrid(key, spec):
+                    uid = f"{entry.entry_id}_{vehicle.identifier}_{key}"
+                    entity_id = registry.async_get_entity_id("sensor", "im_motors", uid)
+                    registered = registry.async_get(entity_id) if entity_id else None
+                    if registered:
+                        updates = registry_changes(registered, allowed)
+                        if updates:
+                            registry.async_update_entity(entity_id, **updates)
+                if allowed and identity not in telemetry_known:
+                    telemetry_known.add(identity)
+                    entities.append(ImMotorsTelemetrySensor(coordinator, vehicle.identifier, key, spec))
             if vehicle.identifier in known:
                 continue
             known.add(vehicle.identifier)
             entities.extend(ImMotorsSensor(coordinator, vehicle.identifier, key) for key in DESCRIPTIONS)
-            entities.extend(ImMotorsTelemetrySensor(coordinator, vehicle.identifier, key, spec)
-                            for key, spec in SENSORS.items() if key != "odometer")
             entities.append(ImMotorsOdometer(coordinator, vehicle.identifier))
             entities.extend(PendingSensor(coordinator, vehicle.identifier, name, index)
                             for index, name in enumerate(PENDING_FIELDS))

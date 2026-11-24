@@ -27,6 +27,7 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
         self.client.set_telemetry_interval(self.telemetry_interval_minutes)
         self.client.set_control_enabled(self.control_enabled)
         self.control_results = {}
+        self.hybrid_capabilities = {}
         from .odometer import OdometerReader
         self.odometer_reader = OdometerReader(client, account_kind=account_type(entry))
         self._request_lock = asyncio.Lock()
@@ -97,6 +98,8 @@ class ImMotorsCoordinator(DataUpdateCoordinator[AccountSnapshot]):
             self.control_results.update(snapshot.control_status)
             if getattr(self, "trips", None):
                 await self.trips.observe(snapshot)
+            if getattr(self, "energy", None):
+                await self.energy.observe(snapshot)
             return snapshot
         except LoginRequired:
             raise ConfigEntryAuthFailed("Manual account login required") from None

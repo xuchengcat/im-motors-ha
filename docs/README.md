@@ -1,6 +1,6 @@
 # 文档导航
 
-首次使用从安装指南开始；已有账号可直接按功能进入。当前开发版为 **0.8.0b6**，具体安装版本与 HACS Release 请分别核对。
+首次使用从安装指南开始；已有账号可直接按功能进入。当前开发版为 **0.9.0b1**，具体安装版本与 HACS Release 请分别核对。
 
 ## 使用指南
 
@@ -10,6 +10,7 @@
 | 账号类型、自动续期、WXAPP 与手机共存 | [认证管理](guides/authentication.md) |
 | 主账号官方日历、长期归档与轨迹 | [官方历史行程](guides/official-trip-history.md) |
 | 副账号从车况自行记录未来行程 | [本地行程记录](guides/local-trip-recording.md) |
+| 充电过程、加油记账与车型能力 | [充电与加油记录](guides/energy-history.md) |
 | 主账号随机自动签到 | [每日签到](guides/daily-checkin.md) |
 | 总里程新来源、查询间隔与权限 | [总里程](guides/odometer.md) |
 | 地图、坐标、高德 Key 与文字地址 | [地图与地址](guides/maps-and-addresses.md) |

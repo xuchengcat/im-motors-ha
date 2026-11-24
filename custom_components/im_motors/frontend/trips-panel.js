@@ -1,3 +1,4 @@
+import "./energy-panel.js";
 const escapeHtml = (value) => String(value ?? "—").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const dayString = (date) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
 const stateNames = {idle:"等待同步",running:"正在同步",complete:"同步完成",error:"同步停止"};
@@ -16,7 +17,7 @@ class ImMotorsTripsPanel extends HTMLElement {
   connectedCallback() {
     if(this._hass && !this.initialized) { this.initialized=true; this.loadEntries(); }
     this.timer=setInterval(()=> {
-      if(this.vehicle && !this.detail && !document.hidden && !this.shadowRoot.activeElement?.matches("input,select"))this.query(false);
+      if(!this.energyView && this.vehicle && !this.detail && !document.hidden && !this.shadowRoot.activeElement?.matches("input,select"))this.query(false);
     },15000);
   }
   disconnectedCallback() { clearInterval(this.timer); this.initialized=false; }
@@ -166,7 +167,15 @@ class ImMotorsTripsPanel extends HTMLElement {
     const count=new Date(year,m,0).getDate(),offset=(new Date(year,m-1,1).getDay()+6)%7;
     return `<section class="card"><div class="toolbar"><h2>官方行车日历</h2><input id="calendar-month" type="month" value="${e(month)}"></div><p>蓝色日期表示本地已归档行程。点击日期只读取本地数据库；自动归档完成后会出现更多日期。</p><div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">${["一","二","三","四","五","六","日"].map(d=>`<span style="text-align:center">${d}</span>`).join("")}${"<span></span>".repeat(offset)}${Array.from({length:count},(_,i)=>{const day=`${month}-${String(i+1).padStart(2,"0")}`;return `<button data-cloud-day="${e(day)}" class="${available.has(day)?"primary":""}" ${day>dayString(new Date())?"disabled":""} aria-label="${e(day)}${available.has(day)?" 有行程":""}">${i+1}${available.has(day)?" ·":""}</button>`;}).join("")}</div></section>`;
   }
+  renderEnergy() {
+    if(this.shadowRoot.querySelector("im-motors-energy-panel"))return;
+    this.shadowRoot.innerHTML='<im-motors-energy-panel></im-motors-energy-panel>';
+    const panel=this.shadowRoot.querySelector("im-motors-energy-panel");
+    panel.initialEntry=this.entry?.entry_id;panel.initialVehicle=this.vehicle;panel.kind=this.energyView;
+    panel.addEventListener("show-trips",()=>{this.energyView=null;this.render();});panel.hass=this._hass;
+  }
   render() {
+    if(this.energyView){this.renderEnergy();return;}
     const e=escapeHtml,r=this.result,s=r?.status||{},stats=r?.stats||{};
     const cloud=this.entry?.source==="official_cloud";
     const missingMileage=(r?.days||[]).filter(d=>d.distance_km===null).length;
@@ -186,7 +195,7 @@ class ImMotorsTripsPanel extends HTMLElement {
         @media(max-width:600px){main{padding:12px}.card{padding:14px}.stats{gap:20px}h1{font-size:21px}input{max-width:145px}.times{font-size:13px}.toolbar{gap:8px}}
       </style>
       <header><hass-toggle-menu></hass-toggle-menu><span>智己历史行程</span></header>
-      <main><h1>每日里程与行程档案</h1>${cloud?"<p>每天自动将近60天尚未归档的官方行程保存到本地。日历、列表与地图均从本地数据库加载，官方历史过期后仍可查看已归档记录。</p>":"<p>每次车辆启动至熄火保存为一段行程，一天可记录多段。起终点需由长时间稳定的停车定位确认，未确认的位置会明确标注。详情保留过程中的定位点与时间，可在地图上查看轨迹。历史长期保留；起止时间受云端采样影响。</p>"}
+      <main><nav class="toolbar" aria-label="档案类型"><button aria-current="page">行程记录</button><button id="energy-charge">充电记录</button>${this.entry?.vehicles?.find(v=>v.id===this.vehicle)?.hybrid===true?'<button id="energy-refuel">加油记录</button>':""}</nav><h1>每日里程与行程档案</h1>${cloud?"<p>每天自动将近60天尚未归档的官方行程保存到本地。日历、列表与地图均从本地数据库加载，官方历史过期后仍可查看已归档记录。</p>":"<p>每次车辆启动至熄火保存为一段行程，一天可记录多段。起终点需由长时间稳定的停车定位确认，未确认的位置会明确标注。详情保留过程中的定位点与时间，可在地图上查看轨迹。历史长期保留；起止时间受云端采样影响。</p>"}
       ${this.error?`<div class="card error" role="alert">${e(this.error)}</div>`:""}
       ${!this.entry?'<div class="card">没有已加载的智己集成，请先配置账号。</div>':`
       <div class="card"><div class="toolbar"><label>账号与车辆<select id="account">${this.entries.flatMap(entry=>entry.vehicles.map(v=>`<option value="${e(entry.entry_id)}:${e(v.id)}" ${entry.entry_id===this.entry.entry_id&&v.id===this.vehicle?"selected":""}>${e(entry.title)} · ${e(v.name)}</option>`)).join("")}</select></label><a href="/config/integrations/integration/im_motors">配置行程同步和高德 Key</a></div>
@@ -207,6 +216,8 @@ class ImMotorsTripsPanel extends HTMLElement {
       ${trips.map(t=>`<article class="trip"><div class="times">${e(t.start_time)} → ${e(t.end_time)}${t.crosses_date?" · 跨天":""}</div><p>${["odometer_interval","stable_parking_interval"].includes(t.detection)?"推定区间：两次驻车采样之间新增了里程，可能包含多次短途。":t.detection==="power_cycle"?"启动 → 熄火行程，起止时间为云端观测值。":t.source==="ha_telemetry"?"HA 观测行程，起止时间受查询间隔影响。":t.source==="official_cloud"?"官方行车日历记录。":"导入的历史记录。"}${t.sampling_gap?" 存在采样缺口。":""}${t.partial_start&&!["odometer_interval","stable_parking_interval"].includes(t.detection)?" 首次采样时车辆已启动，起点可能不完整。":""}${t.parking_confirmation_gap?" 停车确认期间有采样缺口。":""}${t.location_progress_unverified?" 定位未随里程变化，位置需核对。":""}${t.odometer_reset?" 总里程发生回退，未计算本段距离。":""}</p><div class="route"><span>起</span><div>${t.start_parking_confirmed?"<small>已确认停车点</small><br>":t.algorithm_version===2?"<small>起点停车证据不足</small><br>":""}${e(t.start_poi||t.start_address||(t.algorithm_version>=4&&!t.start_parking_confirmed?"起点待确认：缺少稳定停车证据":this.addressPlaceholder(t.start_coordinates)))}${t.start_poi?`<br><small>${e(t.start_address)}</small>`:""}${!t.start_address&&t.start_coordinates?`<br><small>坐标 ${e(t.start_coordinates.latitude)}, ${e(t.start_coordinates.longitude)}</small>`:""}</div><span>终</span><div>${t.end_parking_confirmed?"<small>已确认停车终点</small><br>":""}${e(t.end_poi||t.end_address||(t.algorithm_version>=4&&!t.end_parking_confirmed?"终点待确认：缺少稳定停车证据":this.addressPlaceholder(t.end_coordinates)))}${t.end_poi?`<br><small>${e(t.end_address)}</small>`:""}${!t.end_address&&t.end_coordinates?`<br><small>坐标 ${e(t.end_coordinates.latitude)}, ${e(t.end_coordinates.longitude)}</small>`:""}</div></div><div class="metrics">${e(t.distance_km)} km · ${e(t.duration_minutes)} 分钟 <button data-detail="${e(t.trip_id)}">查看详情与轨迹</button>${t.source==="ha_telemetry"?" · 总里程分辨率 1 km":""}</div></article>`).join("")||`<div class="empty">${cloud?"该日期暂无本地归档。请等待自动归档，或手动补同步该日期。":"没有已结束的行程。车辆启动后开始记录，首次观测到熄火即保存。"}</div>`}
       ${cloud?"<p>日里程采用官方日汇总，不由单段里程相加替代。可查询范围和轨迹完整度由厂商数据及 App 中的历史权限决定；本页面不修改轨迹采集开关。无地址时保留坐标，可用高德 Key 补全。</p>":"<p>里程采用两次总里程读数之差，无法恢复过去两个月。跨天行程按出发日汇总；未采到的启动、熄火与定位无法补回。云端根时间未证实为 GPS 独立采样时间，高德 POI 也可能与官方 App 不同。</p>"}</div>`}</main>`;
     const on=(id,event,fn)=>{const el=this.shadowRoot.getElementById(id);if(el)el.addEventListener(event,fn);};
+    on("energy-charge","click",()=>{this.energyView="charge";this.render();});
+    on("energy-refuel","click",()=>{this.energyView="refuel";this.render();});
     on("calendar-month","change",event=>{this.calendarMonth=event.target.value;this.render();});
     this.shadowRoot.querySelectorAll("[data-cloud-day]").forEach(button=>button.addEventListener("click",()=>{
       this.startDate=this.endDate=button.dataset.cloudDay;this.selectedDay=null;this.detail=null;this.query();

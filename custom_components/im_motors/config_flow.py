@@ -289,6 +289,9 @@ class ImMotorsOptionsFlow(OptionsFlow):
         from .trips import settings
         entry = self.config_entry
         client = AccountClient(entry.data[CONF_DATA_DIR], entry.data[CONF_KEY_FILE])
+        from .capabilities import hybrid
+        runtime = getattr(entry, 'runtime_data', None)
+        show_fuel = bool(runtime and runtime.data and any(hybrid(runtime, v.identifier) is True for v in runtime.data.vehicles))
         errors = {}
         if user_input is not None:
             try:
@@ -322,6 +325,8 @@ class ImMotorsOptionsFlow(OptionsFlow):
                             and account[CONF_ACCOUNT_TYPE] == ACCOUNT_PRIMARY,
                         "daily_checkin_enabled": user_input.get("daily_checkin_enabled", False)
                             and account[CONF_ACCOUNT_TYPE] == ACCOUNT_PRIMARY,
+                        "charge_history_enabled": user_input.get("charge_history_enabled", False),
+                        "refuel_detection_enabled": user_input.get("refuel_detection_enabled", False) and show_fuel,
                         CONF_TELEMETRY_INTERVAL: interval,
                         "amap_key_configured": bool(saved.get("amap_api_key")),
                     })
@@ -331,6 +336,8 @@ class ImMotorsOptionsFlow(OptionsFlow):
             vol.Required("trip_history_enabled", default=entry.options.get("trip_history_enabled", False)): bool,
             vol.Required("daily_checkin_enabled", default=entry.options.get("daily_checkin_enabled", False)): bool,
             vol.Required("cloud_trip_history_enabled", default=entry.options.get("cloud_trip_history_enabled", False)): bool,
+            vol.Required("charge_history_enabled", default=entry.options.get("charge_history_enabled", False)): bool,
+            **({vol.Required("refuel_detection_enabled", default=entry.options.get("refuel_detection_enabled", False)): bool} if show_fuel else {}),
             vol.Required(CONF_TELEMETRY_INTERVAL, default=entry.options.get(CONF_TELEMETRY_INTERVAL,
                 entry.data.get(CONF_TELEMETRY_INTERVAL, DEFAULT_TELEMETRY_INTERVAL))): vol.All(int, vol.Range(min=MIN_TELEMETRY_INTERVAL)),
             vol.Optional("amap_api_key", default=""): selector.TextSelector(selector.TextSelectorConfig(type="password")),

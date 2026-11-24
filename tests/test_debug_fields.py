@@ -13,6 +13,7 @@ from custom_components.im_motors.pyim_china.debug_fields import DEBUG_FIELDS, bo
 from custom_components.im_motors.pyim_china.offline_read_response import (
     parse_read_response, Presence, _ROOT, _PERIOD, _BATTERY, _SECTIONS, _TAB_SECTIONS)
 from custom_components.im_motors.telemetry import SENSORS, normalized
+from custom_components.im_motors.capabilities import requires_hybrid
 
 
 def parsed(category, **tab):
@@ -85,11 +86,12 @@ async def test_all_other_entities_enabled_labelled_defined_and_no_extra_http(has
     with patch("custom_components.im_motors.pyim_china.AccountClient", return_value=account["client"]):
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
-    debug_keys = {key for key, spec in SENSORS.items() if spec.debug}
+    debug_keys = {key for key, spec in SENSORS.items() if spec.debug and not requires_hybrid(key, spec)}
     vehicle_id = hashlib.sha256(VIN.encode()).hexdigest()
     unique_ids = {f"{entry.entry_id}_{vehicle_id}_{key}" for key in debug_keys}
     entries = [e for e in er.async_get(hass).entities.values() if e.unique_id in unique_ids]
-    assert len(entries) == 173
+    assert len(entries) == len(debug_keys)
+    assert len(entries) == 170
     other_label = next(label.label_id for label in lr.async_get(hass).labels.values() if label.name == "其他")
     for entity in entries:
         assert other_label in entity.labels

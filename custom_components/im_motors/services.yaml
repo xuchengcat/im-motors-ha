@@ -129,3 +129,77 @@ sync_trip_history:
       description: 主账号同步结束日期（YYYY-MM-DD），默认今天。
       selector:
         date:
+
+query_energy_history:
+  name: 查询充电与加油记录
+  description: 只读取本地档案，单次最多366天。纯电车辆只返回充电记录。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+    vehicle_id:
+      required: true
+      selector:
+        text:
+    start_date:
+      required: true
+      selector:
+        date:
+    end_date:
+      required: true
+      selector:
+        date:
+    kind:
+      selector:
+        select:
+          options: [charge, refuel]
+    include_hidden:
+      selector:
+        boolean:
+    offset:
+      selector:
+        number:
+          min: 0
+          max: 100000
+          mode: box
+    limit:
+      selector:
+        number:
+          min: 1
+          max: 500
+          mode: box
+
+save_energy_record:
+  name: 添加或补充充电与加油记录
+  description: 自动证据与手工补填分别保存。编辑已有记录需提供最新revision，纯电车辆不能添加加油记录。
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: im_motors
+    vehicle_id:
+      required: true
+      selector:
+        text:
+    kind:
+      required: true
+      selector:
+        select:
+          options: [charge, refuel]
+    values:
+      required: true
+      description: 包含date，充电可填energy_kwh、soc_start、soc_end；加油可填litres、fuel_before、fuel_after、confirmed；共同支持带时区的start_time/end_time、amount、address、note。
+      selector:
+        object:
+    record_id:
+      selector:
+        text:
+    revision:
+      selector:
+        number:
+          min: 1
+          max: 1000000
+          mode: box

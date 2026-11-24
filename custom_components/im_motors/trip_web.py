@@ -11,6 +11,7 @@ from .const import DOMAIN
 from .trip_api import TripError
 from .trip_store import validate_range
 from .trips import ERRORS
+from .capabilities import hybrid
 
 
 def require_admin(connection):
@@ -42,7 +43,9 @@ async def ws_entries(hass, connection, msg):
                        "amap_key_configured": bool(manager.key),
                        "source": manager.source, "interval_minutes": manager.coordinator.telemetry_interval_minutes,
                        "trip_sample_seconds": manager.coordinator.telemetry_interval_minutes * 60,
-                       "vehicles": [{"id": v.identifier, "name": v.name} for v in entry.runtime_data.data.vehicles]})
+                       "vehicles": [{"id": v.identifier, "name": v.name,
+                           "hybrid": hybrid(entry.runtime_data, v.identifier)}
+                           for v in entry.runtime_data.data.vehicles]})
     connection.send_result(msg["id"], result)
 
 
@@ -211,8 +214,9 @@ async def async_setup_web(hass):
         from homeassistant.components import panel_custom
         from homeassistant.components.http import StaticPathConfig
         await hass.http.async_register_static_paths([StaticPathConfig(
-            "/im_motors/trips-panel.js", str(Path(__file__).with_name("frontend") / "trips-panel.js"), False)])
+            "/im_motors/trips-panel.js", str(Path(__file__).with_name("frontend") / "trips-panel.js"), False),
+            StaticPathConfig("/im_motors/energy-panel.js", str(Path(__file__).with_name("frontend") / "energy-panel.js"), False)])
         await panel_custom.async_register_panel(hass, frontend_url_path="im-motors-trips",
             webcomponent_name="im-motors-trips-panel", sidebar_title="智己行程", sidebar_icon="mdi:calendar-clock",
-            module_url="/im_motors/trips-panel.js?v=cloud-calendar-3", require_admin=True)
+            module_url="/im_motors/trips-panel.js?v=energy-1", require_admin=True)
     hass.data[key] = True

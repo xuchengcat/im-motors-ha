@@ -9,6 +9,7 @@
 | `custom_components/im_motors/` | HA生命周期、配置、实体、行程、签到与前端 |
 | `custom_components/im_motors/primary/` | 主账号：官方行程API与归档、签到、行程H5总里程 |
 | `custom_components/im_motors/authorized/` | 授权账号：本地采样/行程、健康诊断API与总里程 |
+| `custom_components/im_motors/energy/` | 主副账号共用的本地充电/加油采样、档案与查询 |
 | `custom_components/im_motors/pyim_china/` | 认证、签名、请求校验与加密存储 |
 | `tests/` | 合成账号与HA回归测试，阻止真实HTTPS |
 | `tools/` | `package_release.py`打包、`audit_release.py`审计、`account_cli.py`离线恢复 |

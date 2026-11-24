@@ -130,8 +130,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "Trip and address settings",
-        "description": "Primary accounts archive missing or changed official trips from the last 60 days once daily at 03:00 in the HA time zone. Startup catches up if needed; interrupted work resumes. Calendar, lists and maps read only the local database. Authorized accounts can record future trips from HA telemetry. Enable the matching switch; the two archives remain separate. AMap Web Service keys are optional and encrypted locally; leave blank to retain the saved key. Check-in is planned.",
+        "title": "History and address settings",
+        "description": "Primary accounts archive missing or changed official trips from the last 60 days once daily at 03:00 in the HA time zone. Startup catches up if needed; interrupted work resumes. Calendar, lists and maps read only the local database. Authorized accounts can record future trips from HA telemetry. Enable the matching switch; the two archives remain separate. AMap Web Service keys are optional and encrypted locally; leave blank to retain the saved key. Check-in is planned. Charging uses existing telemetry. Start/end times are observations; kWh can be entered from a bill.",
         "data": {
           "trip_history_enabled": "Record trips from HA vehicle telemetry",
           "amap_api_key": "AMap Web Service API Key (blank keeps saved key)",
@@ -139,7 +139,9 @@
           "telemetry_interval_minutes": "Vehicle query interval (minutes, minimum 5)",
           "account_type": "Account type",
           "cloud_trip_history_enabled": "Archive official trips daily (primary account)",
-          "daily_checkin_enabled": "Daily randomized check-in (primary account, 02:00–06:00)"
+          "daily_checkin_enabled": "Daily randomized check-in (primary account, 02:00–06:00)",
+          "charge_history_enabled": "Record charging from existing telemetry",
+          "refuel_detection_enabled": "Detect suspected refuelling (hybrid only)"
         }
       }
     },

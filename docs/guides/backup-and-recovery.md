@@ -51,3 +51,5 @@ python tools/account_cli.py --data-dir /config/.storage/im_motors/accounts/账�
 上述命令不发送HTTP，不重发短信；独立Python环境需安装PyCryptodome。HACS运行包不含 `tools/`，需要时下载完整工程。不要删除pending或加密回执来绕过未知结果。
 
 签到 `unknown` 与认证刷新pending不是同一状态：不要使用登录恢复命令清除签到结果。签到提交结果未知时不自动重复POST，先核对App当天记录，见[每日签到](daily-checkin.md)。
+
+0.9.0b1 起账号目录另有 `energy.sqlite3`，包含充电/加油采样、进行中状态和手工补填，需纳入同一备份。关闭记录不会删除这个档案。
