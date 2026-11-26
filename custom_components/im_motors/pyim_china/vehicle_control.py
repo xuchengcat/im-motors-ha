@@ -84,9 +84,10 @@ def compile_command(action, params, *, v3):
         "open_trunk": ("TAILGATE_SWITCH", "5", "RMT_TAILGATE", "1:0"),
         "close_trunk": ("TAILGATE_SWITCH", "1", "RMT_TAILGATE", "2:0"),
         "unlock_trunk": ("LOCK_UNLOCK_TRUNK", "2", "", ""),
-        "open_windows": ("WINDOW_SWITCH", "2", "RMT_WINDOW", "2:254"),
-        "close_windows": ("WINDOW_SWITCH", "1", "RMT_WINDOW", "1:254"),
-        "vent_windows": ("WINDOW_SWITCH", "3", "RMT_WINDOW", "3:254"),
+        # Issue #7 field report (2026 LS6): 1=vent, 2=close, 3=open on both protocols.
+        "open_windows": ("WINDOW_SWITCH", "3", "RMT_WINDOW", "3:254"),
+        "close_windows": ("WINDOW_SWITCH", "2", "RMT_WINDOW", "2:254"),
+        "vent_windows": ("WINDOW_SWITCH", "1", "RMT_WINDOW", "1:254"),
         "find_car": ("LIGHT_AND_WHISTLE", "1", "RMT_LIGHT_AND_WHISTLE", "1"),
         "stop_find_car": ("", "", "RMT_LIGHT_AND_WHISTLE", "2"),
         "open_bonnet": ("", "", "RMT_BONNET", "5"),

@@ -81,6 +81,21 @@ def test_traced_protocol_vectors(v3, action, params, wire):
     assert compile_command(action, params, v3=v3)[1]["commandValue"] == wire
 
 
+@pytest.mark.parametrize("v3,action,command,value", [
+    (False, "vent_windows", "WINDOW_SWITCH", "1"),
+    (True, "vent_windows", "RMT_WINDOW", "1:254"),
+    (False, "close_windows", "WINDOW_SWITCH", "2"),
+    (True, "close_windows", "RMT_WINDOW", "2:254"),
+    (False, "open_windows", "WINDOW_SWITCH", "3"),
+    (True, "open_windows", "RMT_WINDOW", "3:254"),
+])
+def test_window_codes_follow_field_report(v3, action, command, value):
+    path, body = compile_command(action, {}, v3=v3)
+    assert path == (V3_PATH if v3 else LEGACY_PATH)
+    assert body == {"commandType": command, "commandValue": value,
+                    "duration": 0, "operateDevice": "ANDROID"}
+
+
 @pytest.mark.parametrize("action,params,v3", [
     ("charge_target", {"percent": 81}, False), ("charge_target", {"percent": True}, True),
     ("seat_heat", {"level": 4, "position": "front_left"}, True),
